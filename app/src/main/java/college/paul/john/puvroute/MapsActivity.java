@@ -20,6 +20,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -55,10 +56,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        getLastLocation();
-    }
-
-    private void getLastLocation() {
+         /*
+          Call permission dialog for user to allow or dennie.
+          Note that you will not be able to identify your current location if you dennie
+          this permission.
+         */
         ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                 1);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
@@ -66,14 +68,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.getUiSettings().setCompassEnabled(true);
+        mMap.getUiSettings().setRotateGesturesEnabled(true);
+        mMap.getUiSettings().setMapToolbarEnabled(true);
+        getLastLocation();
+    }
+
+    private void getLastLocation() {
+         /*
+          Call permission dialog for user to allow or dennie.
+          Note that you will not be able to identify your current location if you dennie
+          this permission.
+         */
+        ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                1);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
         mFusedLocationProviderClient.getLastLocation()
                 .addOnCompleteListener(this, new OnCompleteListener<Location>() {
                     @Override
                     public void onComplete(@NonNull Task<Location> task) {
                         mLastLocation = task.getResult();
-                        LatLng latLng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-                        mMap.addMarker(new MarkerOptions().position(latLng));
-                        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+                        if(task.isSuccessful()){
+                            CameraPosition oldPos = mMap.getCameraPosition();
+                            CameraPosition pos = CameraPosition.builder(oldPos).bearing(16).build();
+                            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(pos));
+                        }
                     }
                 });
     }
