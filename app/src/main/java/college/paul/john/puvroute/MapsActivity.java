@@ -56,7 +56,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
-        MapRoutes.initRoutes();
+        SharedPrefs.init(this);
+        MapRoutes.getRoutes();
     }
 
     /**

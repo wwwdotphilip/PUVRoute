@@ -1,5 +1,6 @@
 package college.paul.john.puvroute;
 
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.google.firebase.database.DataSnapshot;
@@ -18,7 +19,7 @@ class MapRoutes {
         route = new Route();
     }
 
-    private static MapRoutes getInstance(){
+    static MapRoutes getInstance(){
         synchronized (MapRoutes.class){
             if (instance == null){
                 instance = new MapRoutes();
@@ -27,36 +28,39 @@ class MapRoutes {
         return instance;
     }
 
-    static void initRoutes(){
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("route");
-
-
-        myRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // This method is called once with the initial value and again
-                // whenever data at this location is updated.
-                for (DataSnapshot routeSnapshot: dataSnapshot.getChildren()) {
-                    getInstance().route.name = routeSnapshot.getKey();
-                    for (DataSnapshot data: routeSnapshot.getChildren()){
-                        String value = String.valueOf(data.getValue());
-                        if (data.getKey().equals("description")){
-                            getInstance().route.description = String.valueOf(data.getValue());
-                        } else if (data.getKey().equals("points")){
-                            getInstance().route.points = new Gson().fromJson(value, Points.class);
+    static void getRoutes(){
+        getInstance().route = SharedPrefs.getRoute();
+        if (getInstance().route == null){
+            getInstance().route = new Route();
+            FirebaseDatabase database = FirebaseDatabase.getInstance();
+            DatabaseReference myRef = database.getReference("route");
+            myRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    // This method is called once with the initial value and again
+                    // whenever data at this location is updated.
+                    for (DataSnapshot routeSnapshot: dataSnapshot.getChildren()) {
+                        getInstance().route.name = routeSnapshot.getKey();
+                        for (DataSnapshot data: routeSnapshot.getChildren()){
+                            String value = String.valueOf(data.getValue());
+                            if (data.getKey().equals("description")){
+                                getInstance().route.description = String.valueOf(data.getValue());
+                            } else if (data.getKey().equals("points")){
+                                getInstance().route.points = new Gson().fromJson(value, Points.class);
+                            }
                         }
                     }
+                    Log.v(TAG, SharedPrefs.storeRoute(getInstance().route)?"Store routes success.":"Store routes fail.");
                 }
-                Route route = getInstance().route;
-                Log.v(TAG, "Route: " + route.points.points.length);
-            }
 
-            @Override
-            public void onCancelled(DatabaseError error) {
-                // Failed to read value
-                Log.e(TAG, error.toString());
-            }
-        });
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    // Failed to read value
+                    Log.e(TAG, error.toString());
+                }
+            });
+        } else {
+            Log.v(TAG, "Using stored routes.");
+        }
     }
 }
