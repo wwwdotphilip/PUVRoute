@@ -21,6 +21,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -121,6 +122,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
         });
+
+        /* This is how to manually add a poly line.
+        mMap.addPolyline(new PolylineOptions()
+                .add(new LatLng(7.076831, 125.616697),
+                        new LatLng(7.077124, 125.622816),
+                        new LatLng(7.075665, 125.623416))
+                .width(5)
+                .color(Color.RED));*/
     }
 
     private void getLastLocation() {
