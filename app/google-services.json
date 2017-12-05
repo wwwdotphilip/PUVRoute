@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "456141487054",
+    "firebase_url": "https://puvrouter.firebaseio.com",
+    "project_id": "puvrouter",
+    "storage_bucket": "puvrouter.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:456141487054:android:1bb3f88a1bcb45a6",
+        "android_client_info": {
+          "package_name": "college.paul.john.puvroute"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "456141487054-cbampogq31d66sire88r11n4jt15ppe7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "college.paul.john.puvroute",
+            "certificate_hash": "f5f37bea34785a7fab90423a97481af59a34a3e6"
+          }
+        },
+        {
+          "client_id": "456141487054-36tg5f47hrjr2jaausc1a2nheint36mn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMErg1gVrkISLMs5lGF1d3CbjVs1GBGZY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "456141487054-36tg5f47hrjr2jaausc1a2nheint36mn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
