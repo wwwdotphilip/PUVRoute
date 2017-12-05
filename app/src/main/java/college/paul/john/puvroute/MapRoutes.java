@@ -10,13 +10,22 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 
+import java.util.ArrayList;
+
 class MapRoutes {
     private static final String TAG = "MapRoutes";
     private static volatile MapRoutes instance;
-    private Route route;
+    private ArrayList<Route> routeList;
+    private RouteListener mListener;
+
+    public interface RouteListener{
+        void loadComplete();
+        void onError(String error);
+        void onChange(Route route);
+    }
 
     private MapRoutes(){
-        route = new Route();
+        routeList = new ArrayList<>();
     }
 
     static MapRoutes getInstance(){
@@ -28,10 +37,13 @@ class MapRoutes {
         return instance;
     }
 
-    static void getRoutes(){
-        getInstance().route = SharedPrefs.getRoute();
-        if (getInstance().route == null){
-            getInstance().route = new Route();
+    static void setRouteListener(RouteListener listener){
+        getInstance().mListener = listener;
+    }
+
+    static void loadRoutes(){
+        getInstance().routeList = SharedPrefs.getRoute();
+        if (getInstance().routeList.size() < 1){
             FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference myRef = database.getReference("route");
             myRef.addValueEventListener(new ValueEventListener() {
@@ -40,17 +52,22 @@ class MapRoutes {
                     // This method is called once with the initial value and again
                     // whenever data at this location is updated.
                     for (DataSnapshot routeSnapshot: dataSnapshot.getChildren()) {
-                        getInstance().route.name = routeSnapshot.getKey();
+                        Route route = new Route();
+                        route.name = routeSnapshot.getKey();
                         for (DataSnapshot data: routeSnapshot.getChildren()){
                             String value = String.valueOf(data.getValue());
                             if (data.getKey().equals("description")){
-                                getInstance().route.description = String.valueOf(data.getValue());
+                                route.description = String.valueOf(data.getValue());
                             } else if (data.getKey().equals("points")){
-                                getInstance().route.points = new Gson().fromJson(value, Points.class);
+                                route.points = new Gson().fromJson(value, Points.class);
                             }
                         }
+                        getInstance().routeList.add(route);
                     }
-                    Log.v(TAG, SharedPrefs.storeRoute(getInstance().route)?"Store routes success.":"Store routes fail.");
+                    if (getInstance().mListener != null){
+                        getInstance().mListener.loadComplete();
+                    }
+                    Log.v(TAG, SharedPrefs.storeRoutes(getInstance().routeList)?"Store routes success.":"Store routes fail.");
                 }
 
                 @Override
@@ -61,6 +78,28 @@ class MapRoutes {
             });
         } else {
             Log.v(TAG, "Using stored routes.");
+            if (getInstance().mListener != null){
+                getInstance().mListener.loadComplete();
+            }
+        }
+    }
+
+    static ArrayList<Route> getRouteList(){
+        return getInstance().routeList;
+    }
+
+    static void changeRoute(String routeName){
+        Route route = null;
+        for (Route item : getInstance().routeList){
+            if (item.name.equals(routeName)){
+                route = item;
+                break;
+            }
+        }
+        if (route != null){
+            if (getInstance().mListener != null){
+                getInstance().mListener.onChange(route);
+            }
         }
     }
 }

@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.util.ArrayList;
 
 class SharedPrefs {
     private static volatile SharedPrefs instance;
@@ -26,9 +29,9 @@ class SharedPrefs {
         getInstance().mSharedPreferences = context.getSharedPreferences("puvrouter", Context.MODE_PRIVATE);
     }
 
-    static boolean storeRoute(Route route){
+    static boolean storeRoutes(ArrayList<Route> routes){
         try {
-            String result = new Gson().toJson(route, Route.class);
+            String result = new Gson().toJson(routes);
             getInstance().mSharedPreferences.edit().putString("routes", result).apply();
             return true;
         } catch (Exception e) {
@@ -37,12 +40,12 @@ class SharedPrefs {
         }
     }
 
-    static Route getRoute(){
-        Route route = null;
+    static ArrayList<Route> getRoute(){
+        ArrayList<Route> routeList = new ArrayList<>();
         String result = getInstance().mSharedPreferences.getString("routes", null);
         if (result != null){
-            route = new Gson().fromJson(result, Route.class);
+            routeList = new Gson().fromJson(result, new TypeToken<ArrayList<Route>>() {}.getType());
         }
-        return route;
+        return routeList;
     }
 }
