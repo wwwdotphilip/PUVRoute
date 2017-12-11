@@ -8,6 +8,10 @@ import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
 
+/*
+    This class is responsible for storing and acquiring route data locally.
+    All local storage should be done here.
+ */
 class SharedPrefs {
     private static volatile SharedPrefs instance;
     private SharedPreferences mSharedPreferences;
@@ -16,19 +20,22 @@ class SharedPrefs {
 
     }
 
-    static SharedPrefs getInstance(){
+    private static SharedPrefs getInstance(){
         synchronized (SharedPrefs.class){
             if (instance == null){
+                // Create a new instance if there are no existing one.
                 instance = new SharedPrefs();
             }
         }
         return instance;
     }
 
+    // Initialize sharedpreference.
     static void init(Context context){
         getInstance().mSharedPreferences = context.getSharedPreferences("puvrouter", Context.MODE_PRIVATE);
     }
 
+    // Store routes locally.
     static boolean storeRoutes(ArrayList<Route> routes){
         try {
             String result = new Gson().toJson(routes);
@@ -40,6 +47,7 @@ class SharedPrefs {
         }
     }
 
+    // Get routes from local storage.
     static ArrayList<Route> getRoute(){
         ArrayList<Route> routeList = new ArrayList<>();
         String result = getInstance().mSharedPreferences.getString("routes", null);

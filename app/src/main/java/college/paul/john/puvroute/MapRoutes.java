@@ -1,6 +1,5 @@
 package college.paul.john.puvroute;
 
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.google.firebase.database.DataSnapshot;
@@ -12,6 +11,10 @@ import com.google.gson.Gson;
 
 import java.util.ArrayList;
 
+/*
+    This class is the bridge between the ui and backend of the app
+    All data handling should be call here.
+ */
 class MapRoutes {
     private static final String TAG = "MapRoutes";
     private static volatile MapRoutes instance;
@@ -28,9 +31,10 @@ class MapRoutes {
         routeList = new ArrayList<>();
     }
 
-    static MapRoutes getInstance(){
+    private static MapRoutes getInstance(){
         synchronized (MapRoutes.class){
             if (instance == null){
+                // Create a new instance if there are no existing one.
                 instance = new MapRoutes();
             }
         }
@@ -41,9 +45,13 @@ class MapRoutes {
         getInstance().mListener = listener;
     }
 
+    /*
+        Load route data from firebase or local storage.
+     */
     static void loadRoutes(){
         getInstance().routeList = SharedPrefs.getRoute();
         if (getInstance().routeList.size() < 1){
+            // Download and use firebase database.
             FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference myRef = database.getReference("route");
             myRef.addValueEventListener(new ValueEventListener() {
@@ -74,20 +82,25 @@ class MapRoutes {
                 public void onCancelled(DatabaseError error) {
                     // Failed to read value
                     Log.e(TAG, error.toString());
+                    if (getInstance().mListener != null){
+                        getInstance().mListener.onError(error.toString());
+                    }
                 }
             });
         } else {
-            Log.v(TAG, "Using stored routes.");
+            // Use locally stored database
             if (getInstance().mListener != null){
                 getInstance().mListener.loadComplete();
             }
         }
     }
 
+    // Get list of routes.
     static ArrayList<Route> getRouteList(){
         return getInstance().routeList;
     }
 
+    // Change to a new route.
     static void changeRoute(String routeName){
         Route route = null;
         for (Route item : getInstance().routeList){

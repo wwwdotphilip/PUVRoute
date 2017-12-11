@@ -1,6 +1,8 @@
 package college.paul.john.puvroute;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -8,7 +10,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -19,19 +20,17 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
-    private static final String TAG = "MapsActivity";
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
-    private Location mLastLocation;
     private ArrayList<LatLng> markerPoints;
 
     @Override
@@ -94,30 +93,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+        mMap.setOnMarkerClickListener(new MarkerClickListener());
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
         mMap.getUiSettings().setRotateGesturesEnabled(true);
         mMap.getUiSettings().setMapToolbarEnabled(true);
-        getLastLocation();
 
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
                 markerPoints.add(latLng);
-                mMap.clear();
-                LatLng[] point = new LatLng[markerPoints.size()];
-                for (int i = 0; i < markerPoints.size(); i++){
-                    point[i] = markerPoints.get(i);
-                    MarkerOptions options = new MarkerOptions();
-                    options.position(point[i]);
-                    options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                    mMap.addMarker(options);
-                }
-                mMap.addPolyline(new PolylineOptions()
-                        .add(latLng)
-                        .width(5)
-                        .color(Color.RED));
+                redrawMap();
             }
         });
 
@@ -125,12 +112,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         MapRoutes.setRouteListener(new MapRoutes.RouteListener() {
             @Override
             public void loadComplete() {
-                Log.v(TAG, "Loading map complete");
+                // Do something here once map route initialization is complete.
             }
 
             @Override
             public void onError(String error) {
-                Log.v(TAG, error);
+                // Do something here if MapRoutes produce any error.
             }
 
             @Override
@@ -140,11 +127,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
         // Load map routes from server or local file.
         MapRoutes.loadRoutes();
+        getLastLocation();
+    }
 
-        // TODO: 12/5/17 Remove below code.
-        ArrayList<Route> routes = MapRoutes.getRouteList();
-        Random random = new Random();
-        MapRoutes.changeRoute(routes.get(random.nextInt(routes.size())).name);
+    // Redraw the entire map. All old data are replaced.
+    private void redrawMap() {
+        mMap.clear();
+        LatLng[] point = new LatLng[markerPoints.size()];
+        for (int i = 0; i < markerPoints.size(); i++){
+            point[i] = markerPoints.get(i);
+            MarkerOptions options = new MarkerOptions();
+            options.title("Point "+(i+1));
+            options.position(point[i]);
+            options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+            mMap.addMarker(options).showInfoWindow();
+        }
+
+        if (markerPoints.size() > 1){
+            mMap.addPolyline(new PolylineOptions()
+                    .add(point)
+                    .width(5)
+                    .color(Color.RED));
+        }
     }
 
     private void getLastLocation() {
@@ -161,11 +165,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
 
+        // Check for last know location
         mFusedLocationProviderClient.getLastLocation()
                 .addOnCompleteListener(this, new OnCompleteListener<Location>() {
                     @Override
                     public void onComplete(@NonNull Task<Location> task) {
-                        mLastLocation = task.getResult();
                         if(task.isSuccessful()){
                             CameraPosition oldPos = mMap.getCameraPosition();
                             CameraPosition pos = CameraPosition.builder(oldPos).bearing(16).build();
@@ -173,5 +177,46 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         }
                     }
                 });
+    }
+
+    private class MarkerClickListener implements GoogleMap.OnMarkerClickListener{
+
+        // This gets called every time a marker is pressed.
+        @Override
+        public boolean onMarkerClick(final Marker marker) {
+            double latitude = marker.getPosition().latitude;
+            double longitude = marker.getPosition().longitude;
+
+            // Loop through the entire list.
+            for (int i = 0; i < markerPoints.size(); i++){
+
+                // Check if latitude and longitude are similar.
+                if (latitude == markerPoints.get(i).latitude && longitude == markerPoints.get(i).longitude){
+                    // Show dialog to confirm deletion.
+                    final int finalI = i;
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(MapsActivity.this);
+                    builder.setTitle("Delete");
+                    builder.setMessage("Are you sure you want to delete " + marker.getTitle());
+                    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            markerPoints.remove(finalI);
+                            redrawMap();
+                        }
+                    });
+                    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Close dialog and show info of selected marker.
+                            marker.showInfoWindow();
+                        }
+                    });
+                    builder.create();
+                    builder.show();
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }
