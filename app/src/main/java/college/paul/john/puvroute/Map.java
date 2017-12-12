@@ -37,11 +37,10 @@ class Map {
     private GoogleMap mMap;
     private ArrayList<LatLng> markerPoints;
     private int currentMode = 0;
-    boolean justLoaded = false;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private OnMapListener mMapListener;
 
-    public static interface OnMapListener{
+    interface OnMapListener{
         void onChangeMode(Mode mode);
     }
 
@@ -88,15 +87,19 @@ class Map {
         return instance;
     }
 
+    // This doesn't do anything much but this is useful when you have UI that
+    // changes behavior when the map changes mode.
     static void setMode(int mode) {
         getInstance().currentMode = mode;
     }
 
+    // Get current map mode.
     static int getMode(){
         return getInstance().currentMode;
     }
 
-    static void getLastLocation(Context context) {
+    // Update your map and display your current location.
+    private static void getLastLocation(Context context) {
         if (getInstance().mFusedLocationProviderClient != null) {
          /*
           Call permission dialog for user to allow or dennie.
@@ -116,15 +119,12 @@ class Map {
                             @Override
                             public void onComplete(@NonNull Task<Location> task) {
                                 if (task.isSuccessful()) {
-                                    if (getInstance().justLoaded) {
-                                        getInstance().justLoaded = false;
-                                        CameraPosition cameraPosition = new CameraPosition.Builder()
-                                                .target(new LatLng(task.getResult().getLatitude(),
-                                                        task.getResult().getLongitude()))   // Sets the center of the map to location user
-                                                .zoom(17)   // Sets the zoom
-                                                .build();
-                                        getInstance().mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                                    }
+                                    CameraPosition cameraPosition = new CameraPosition.Builder()
+                                            .target(new LatLng(task.getResult().getLatitude(),
+                                                    task.getResult().getLongitude()))   // Sets the center of the map to location user
+                                            .zoom(17)   // Sets the zoom
+                                            .build();
+                                    getInstance().mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                                 }
                             }
                         });
@@ -133,7 +133,6 @@ class Map {
             }
         }
     }
-
 
     // Redraw the entire map. All old data are replaced.
     private static void redrawMap() {

@@ -55,6 +55,7 @@ class MapRoutes {
         return instance;
     }
 
+    // Listen to any changes happening to MapRoutes
     static void setRouteListener(RouteListener listener) {
         getInstance().mListener = listener;
     }
@@ -75,6 +76,7 @@ class MapRoutes {
         }
     }
 
+    // Download routes from firebase server.
     static void downloadFromServer() {
         // Download and use firebase database.
         FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -114,11 +116,17 @@ class MapRoutes {
         });
     }
 
+    /*
+        Add route to to server
+     */
     static void addRoute(final Context context, final ArrayList<LatLng> markerPoints, final boolean confirmation, final String routeName) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(context);
         String positive = "Done";
         final String[] tempRouteName = new String[1];
         EditText input = null;
+
+        // check if dialog is a confirmation to overwrite an existing route.
+        // If it is true then show message that an existing route name is present.
         if (confirmation) {
             if (routeName != null)
                 tempRouteName[0] = routeName;
@@ -151,13 +159,14 @@ class MapRoutes {
                             if (item.name.equals(tempRouteName[0])) {
                                 addRoute(context, markerPoints, true, tempRouteName[0]);
                                 return;
+                                // All the codes below will be skipped because there is an existing route name.
                             }
                         }
                     }
 
                     Log.v(TAG, "Updating firebase.");
                     FirebaseDatabase database = FirebaseDatabase.getInstance();
-                    DatabaseReference myRef = database.getReference("route");
+                    DatabaseReference dbRef = database.getReference("route");
 
                     final double[][] latlong = new double[markerPoints.size()][2];
                     for (int i = 0; i < markerPoints.size(); i++) {
@@ -165,10 +174,12 @@ class MapRoutes {
                         latlong[i][1] = markerPoints.get(i).longitude;
                     }
                     final String points = "{   \"coordinates\":" + new Gson().toJson(latlong) + "}";
-                    myRef.child(tempRouteName[0]).child("coordinates")
+                    // Send the data to server.
+                    dbRef.child(tempRouteName[0]).child("coordinates")
                             .setValue(points, new DatabaseReference.CompletionListener() {
                                 @Override
                                 public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                    // The new data has been save to the server.
                                     Route route = new Route();
                                     route.name = tempRouteName[0];
                                     route.points = new Points();
@@ -190,6 +201,7 @@ class MapRoutes {
         builder.show();
     }
 
+    // Update route list and store to local storage.
     static void updateRoute(Route route) {
         getInstance().routeList.add(route);
         SharedPrefs.storeRoutes(getInstance().routeList);
@@ -219,6 +231,7 @@ class MapRoutes {
         }
     }
 
+    // Display a randomize selection of routes from the routelist..
     static void randomRoute() {
         ArrayList<Route> routes = getInstance().routeList;
         if (routes.size() > 0) {

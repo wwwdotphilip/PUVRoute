@@ -23,7 +23,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         message = findViewById(R.id.tvMessage);
-        Map.getInstance().justLoaded = true;
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -86,10 +85,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         MapRoutes.loadRoutes();
     }
 
+    // Button event for cancel
     public void cancelMapMaker(View view) {
         Map.clearMap();
     }
 
+    // Button event for save
     public void saveMapMaker(final View view) {
         MapRoutes.addRoute(MapsActivity.this, Map.getMarkerPoints(), false, null);
     }
