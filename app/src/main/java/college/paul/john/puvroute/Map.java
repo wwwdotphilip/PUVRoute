@@ -39,103 +39,18 @@ class Map {
     private int currentMode = 0;
     boolean justLoaded = false;
     private FusedLocationProviderClient mFusedLocationProviderClient;
+    private OnMapListener mMapListener;
 
-    static void init(Context context) {
+    public static interface OnMapListener{
+        void onChangeMode(Mode mode);
+    }
+
+    static void init(Context context, GoogleMap map) {
         getInstance().mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
         getInstance().markerPoints = new ArrayList<>();
-    }
-
-    static Map getInstance() {
-        synchronized (Map.class) {
-            if (instance == null) {
-                instance = new Map();
-            }
-        }
-        return instance;
-    }
-
-    static void setMode(int mode) {
-        getInstance().currentMode = mode;
-    }
-
-    static int getMode(){
-        return getInstance().currentMode;
-    }
-
-    class Mode {
-        static final int FREE = 0;
-        static final int ROUTE = 1;
-        static final int MAP_MAKER = 2;
-    }
-
-    void getLastLocation(Context context) {
-        if (mFusedLocationProviderClient != null) {
-         /*
-          Call permission dialog for user to allow or dennie.
-          Note that you will not be able to identify your current location if you dennie
-          this permission.
-         */
-            ActivityCompat.requestPermissions((Activity) context, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                    1);
-            if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-
-            if (getInstance().mMap != null) {
-                // Check for last know location
-                mFusedLocationProviderClient.getLastLocation()
-                        .addOnCompleteListener((Activity) context, new OnCompleteListener<Location>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Location> task) {
-                                if (task.isSuccessful()) {
-                                    if (getInstance().justLoaded) {
-                                        getInstance().justLoaded = false;
-                                        CameraPosition cameraPosition = new CameraPosition.Builder()
-                                                .target(new LatLng(task.getResult().getLatitude(),
-                                                        task.getResult().getLongitude()))   // Sets the center of the map to location user
-                                                .zoom(17)   // Sets the zoom
-                                                .build();
-                                        getInstance().mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                                    }
-                                }
-                            }
-                        });
-            } else {
-                Log.e(TAG, "Map has not been initialize. Call Map.setMap(GoogleMap)");
-            }
-        }
-    }
-
-
-    // Redraw the entire map. All old data are replaced.
-    static void redrawMap() {
-        if (getInstance().mMap != null) {
-            getInstance().mMap.clear();
-            LatLng[] point = new LatLng[getInstance().markerPoints.size()];
-            for (int i = 0; i < getInstance().markerPoints.size(); i++) {
-                point[i] = getInstance().markerPoints.get(i);
-                MarkerOptions options = new MarkerOptions();
-                options.title("Point " + (i + 1));
-                options.position(point[i]);
-                options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                getInstance().mMap.addMarker(options).showInfoWindow();
-            }
-
-            if (getInstance().markerPoints.size() > 1) {
-                getInstance().mMap.addPolyline(new PolylineOptions()
-                        .add(point)
-                        .width(5)
-                        .color(Color.RED));
-            }
-        } else {
-            Log.e(TAG, "Map has not been initialize. Call Map.setMap(GoogleMap)");
-        }
-    }
-
-    static void setMap(Context context, GoogleMap map){
         getInstance().mMap = map;
         getInstance().mMap.setOnMarkerClickListener(new MarkerClickListener(context));
-
+        getLastLocation(context);
 
          /*
           Call permission dialog for user to allow or dennie.
@@ -162,6 +77,87 @@ class Map {
                 redrawMap();
             }
         });
+    }
+
+    static Map getInstance() {
+        synchronized (Map.class) {
+            if (instance == null) {
+                instance = new Map();
+            }
+        }
+        return instance;
+    }
+
+    static void setMode(int mode) {
+        getInstance().currentMode = mode;
+    }
+
+    static int getMode(){
+        return getInstance().currentMode;
+    }
+
+    static void getLastLocation(Context context) {
+        if (getInstance().mFusedLocationProviderClient != null) {
+         /*
+          Call permission dialog for user to allow or dennie.
+          Note that you will not be able to identify your current location if you dennie
+          this permission.
+         */
+            ActivityCompat.requestPermissions((Activity) context, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    1);
+            if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+
+            if (getInstance().mMap != null) {
+                // Check for last know location
+                getInstance().mFusedLocationProviderClient.getLastLocation()
+                        .addOnCompleteListener((Activity) context, new OnCompleteListener<Location>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Location> task) {
+                                if (task.isSuccessful()) {
+                                    if (getInstance().justLoaded) {
+                                        getInstance().justLoaded = false;
+                                        CameraPosition cameraPosition = new CameraPosition.Builder()
+                                                .target(new LatLng(task.getResult().getLatitude(),
+                                                        task.getResult().getLongitude()))   // Sets the center of the map to location user
+                                                .zoom(17)   // Sets the zoom
+                                                .build();
+                                        getInstance().mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                                    }
+                                }
+                            }
+                        });
+            } else {
+                Log.e(TAG, "Map has not been initialize. Call Map.setMap(GoogleMap)");
+            }
+        }
+    }
+
+
+    // Redraw the entire map. All old data are replaced.
+    private static void redrawMap() {
+        if (getInstance().mMap != null) {
+            getInstance().mMap.clear();
+            LatLng[] point = new LatLng[getInstance().markerPoints.size()];
+            for (int i = 0; i < getInstance().markerPoints.size(); i++) {
+                point[i] = getInstance().markerPoints.get(i);
+                MarkerOptions options = new MarkerOptions();
+                options.title("Point " + (i + 1));
+                options.position(point[i]);
+                options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                getInstance().mMap.addMarker(options).showInfoWindow();
+            }
+
+            if (getInstance().markerPoints.size() > 1) {
+                getInstance().mMap.addPolyline(new PolylineOptions()
+                        .add(point)
+                        .width(5)
+                        .color(Color.RED));
+            }
+        } else {
+            Log.e(TAG, "Map has not been initialize. Call Map.setMap(GoogleMap)");
+        }
     }
 
     static GoogleMap getMap(){
@@ -226,5 +222,15 @@ class Map {
             }
             return false;
         }
+    }
+
+    static void setMapListener(OnMapListener mapListener){
+        getInstance().mMapListener = mapListener;
+    }
+
+    class Mode {
+        static final int FREE = 0;
+        static final int ROUTE = 1;
+        static final int MAP_MAKER = 2;
     }
 }

@@ -1,12 +1,7 @@
 package college.paul.john.puvroute;
 
-import android.Manifest;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.widget.TextView;
@@ -16,7 +11,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
@@ -34,8 +28,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        Map.init(this);
-        Map.setMode(Map.Mode.FREE);
     }
 
     @Override
@@ -57,8 +49,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Map.setMap(MapsActivity.this, googleMap);
-        Map.getInstance().getLastLocation(MapsActivity.this);
+        Map.init(MapsActivity.this, googleMap);
+        Map.setMode(Map.Mode.FREE);
+        Map.setMapListener(new Map.OnMapListener() {
+            @Override
+            public void onChangeMode(Map.Mode mode) {
+                // Do something here when map changes mode.
+            }
+        });
 
         // Listen to any changes happening to MapRoutes
         MapRoutes.setRouteListener(new MapRoutes.RouteListener() {
