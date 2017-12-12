@@ -1,5 +1,8 @@
 package college.paul.john.puvroute;
 
-class Points{
-    double[][] points;
+import com.google.gson.annotations.SerializedName;
+
+class Points {
+    @SerializedName("points")
+    double[][] coordinates;
 }

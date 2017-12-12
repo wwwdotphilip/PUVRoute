@@ -1,7 +1,16 @@
 package college.paul.john.puvroute;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.location.Location;
 import android.util.Log;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -10,6 +19,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /*
     This class is the bridge between the ui and backend of the app
@@ -21,19 +31,23 @@ class MapRoutes {
     private ArrayList<Route> routeList;
     private RouteListener mListener;
 
-    public interface RouteListener{
+    public interface RouteListener {
         void loadComplete();
+
         void onError(String error);
+
         void onChange(Route route);
+
+        void onUpdate(ArrayList<Route> routes);
     }
 
-    private MapRoutes(){
+    private MapRoutes() {
         routeList = new ArrayList<>();
     }
 
-    private static MapRoutes getInstance(){
-        synchronized (MapRoutes.class){
-            if (instance == null){
+    private static MapRoutes getInstance() {
+        synchronized (MapRoutes.class) {
+            if (instance == null) {
                 // Create a new instance if there are no existing one.
                 instance = new MapRoutes();
             }
@@ -41,78 +55,176 @@ class MapRoutes {
         return instance;
     }
 
-    static void setRouteListener(RouteListener listener){
+    static void setRouteListener(RouteListener listener) {
         getInstance().mListener = listener;
     }
 
     /*
         Load route data from firebase or local storage.
      */
-    static void loadRoutes(){
+    static void loadRoutes() {
         getInstance().routeList = SharedPrefs.getRoute();
-        if (getInstance().routeList.size() < 1){
-            // Download and use firebase database.
-            FirebaseDatabase database = FirebaseDatabase.getInstance();
-            DatabaseReference myRef = database.getReference("route");
-            myRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    // This method is called once with the initial value and again
-                    // whenever data at this location is updated.
-                    for (DataSnapshot routeSnapshot: dataSnapshot.getChildren()) {
-                        Route route = new Route();
-                        route.name = routeSnapshot.getKey();
-                        for (DataSnapshot data: routeSnapshot.getChildren()){
-                            String value = String.valueOf(data.getValue());
-                            if (data.getKey().equals("description")){
-                                route.description = String.valueOf(data.getValue());
-                            } else if (data.getKey().equals("points")){
-                                route.points = new Gson().fromJson(value, Points.class);
-                            }
-                        }
-                        getInstance().routeList.add(route);
-                    }
-                    if (getInstance().mListener != null){
-                        getInstance().mListener.loadComplete();
-                    }
-                    Log.v(TAG, SharedPrefs.storeRoutes(getInstance().routeList)?"Store routes success.":"Store routes fail.");
-                }
+        if (getInstance().routeList.size() < 1) {
+            downloadFromServer();
 
-                @Override
-                public void onCancelled(DatabaseError error) {
-                    // Failed to read value
-                    Log.e(TAG, error.toString());
-                    if (getInstance().mListener != null){
-                        getInstance().mListener.onError(error.toString());
-                    }
-                }
-            });
         } else {
             // Use locally stored database
-            if (getInstance().mListener != null){
+            if (getInstance().mListener != null) {
                 getInstance().mListener.loadComplete();
             }
         }
     }
 
+    static void downloadFromServer() {
+        // Download and use firebase database.
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("route");
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // This method is called once with the initial value and again
+                // whenever data at this location is updated.
+                for (DataSnapshot routeSnapshot : dataSnapshot.getChildren()) {
+                    Route route = new Route();
+                    route.name = routeSnapshot.getKey();
+                    for (DataSnapshot data : routeSnapshot.getChildren()) {
+                        String value = String.valueOf(data.getValue());
+                        if (data.getKey().equals("description")) {
+                            route.description = String.valueOf(data.getValue());
+                        } else if (data.getKey().equals("coordinates")) {
+                            route.points = new Gson().fromJson(value, Points.class);
+                        }
+                    }
+                    getInstance().routeList.add(route);
+                }
+                if (getInstance().mListener != null) {
+                    getInstance().mListener.loadComplete();
+                }
+                Log.v(TAG, SharedPrefs.storeRoutes(getInstance().routeList) ? "Store routes success." : "Store routes fail.");
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                // Failed to read value
+                Log.e(TAG, error.toString());
+                if (getInstance().mListener != null) {
+                    getInstance().mListener.onError(error.toString());
+                }
+            }
+        });
+    }
+
+    static void addRoute(final Context context, final ArrayList<LatLng> markerPoints, final boolean confirmation, final String routeName) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        String positive = "Done";
+        final String[] tempRouteName = new String[1];
+        EditText input = null;
+        if (confirmation) {
+            if (routeName != null)
+                tempRouteName[0] = routeName;
+            positive = "Yes";
+            builder.setMessage(tempRouteName[0] + " already exist in the database. Would you like to overwrite it?");
+        } else {
+            input = new EditText(context);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT);
+            input.setLayoutParams(lp);
+            input.setHint("Route Name");
+            builder.setView(input);
+        }
+
+        builder.setTitle("Save Route");
+        final EditText finalInput = input;
+        builder.setPositiveButton(positive, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (finalInput != null) {
+                    tempRouteName[0] = finalInput.getText().toString();
+                }
+                if (tempRouteName[0].isEmpty()) {
+                    Toast.makeText(context, "Route name is empty", Toast.LENGTH_SHORT).show();
+                    addRoute(context, markerPoints, confirmation, routeName);
+                } else {
+                    if (!confirmation) {
+                        for (Route item : getInstance().routeList) {
+                            if (item.name.equals(tempRouteName[0])) {
+                                addRoute(context, markerPoints, true, tempRouteName[0]);
+                                return;
+                            }
+                        }
+                    }
+
+                    Log.v(TAG, "Updating firebase.");
+                    FirebaseDatabase database = FirebaseDatabase.getInstance();
+                    DatabaseReference myRef = database.getReference("route");
+
+                    final double[][] latlong = new double[markerPoints.size()][2];
+                    for (int i = 0; i < markerPoints.size(); i++) {
+                        latlong[i][0] = markerPoints.get(i).latitude;
+                        latlong[i][1] = markerPoints.get(i).longitude;
+                    }
+                    final String points = "{   \"coordinates\":" + new Gson().toJson(latlong) + "}";
+                    myRef.child(tempRouteName[0]).child("coordinates")
+                            .setValue(points, new DatabaseReference.CompletionListener() {
+                                @Override
+                                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                    Route route = new Route();
+                                    route.name = tempRouteName[0];
+                                    route.points = new Points();
+                                    route.points.coordinates = latlong;
+                                    MapRoutes.updateRoute(route);
+                                    Toast.makeText(context, "New route saved", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        builder.create();
+        builder.show();
+    }
+
+    static void updateRoute(Route route) {
+        getInstance().routeList.add(route);
+        SharedPrefs.storeRoutes(getInstance().routeList);
+        if (getInstance().mListener != null) {
+            getInstance().mListener.onUpdate(getInstance().routeList);
+        }
+    }
+
     // Get list of routes.
-    static ArrayList<Route> getRouteList(){
+    static ArrayList<Route> getRouteList() {
         return getInstance().routeList;
     }
 
     // Change to a new route.
-    static void changeRoute(String routeName){
+    static void changeRoute(String routeName) {
         Route route = null;
-        for (Route item : getInstance().routeList){
-            if (item.name.equals(routeName)){
+        for (Route item : getInstance().routeList) {
+            if (item.name.equals(routeName)) {
                 route = item;
                 break;
             }
         }
-        if (route != null){
-            if (getInstance().mListener != null){
+        if (route != null) {
+            if (getInstance().mListener != null) {
                 getInstance().mListener.onChange(route);
             }
+        }
+    }
+
+    static void randomRoute() {
+        ArrayList<Route> routes = getInstance().routeList;
+        if (routes.size() > 0) {
+            Random rand = new Random();
+            int index = rand.nextInt(routes.size()-1);
+            changeRoute(routes.get(index).name);
         }
     }
 }

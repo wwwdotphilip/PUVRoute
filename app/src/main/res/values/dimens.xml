@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="messageSideMargin">55dp</dimen>
+    <dimen name="messageTopMargin">10dp</dimen>
+    <dimen name="messagePadding">5dp</dimen>
+</resources>

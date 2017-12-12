@@ -16,13 +16,13 @@ class SharedPrefs {
     private static volatile SharedPrefs instance;
     private SharedPreferences mSharedPreferences;
 
-    private SharedPrefs(){
+    private SharedPrefs() {
 
     }
 
-    private static SharedPrefs getInstance(){
-        synchronized (SharedPrefs.class){
-            if (instance == null){
+    private static SharedPrefs getInstance() {
+        synchronized (SharedPrefs.class) {
+            if (instance == null) {
                 // Create a new instance if there are no existing one.
                 instance = new SharedPrefs();
             }
@@ -31,12 +31,12 @@ class SharedPrefs {
     }
 
     // Initialize sharedpreference.
-    static void init(Context context){
+    static void init(Context context) {
         getInstance().mSharedPreferences = context.getSharedPreferences("puvrouter", Context.MODE_PRIVATE);
     }
 
     // Store routes locally.
-    static boolean storeRoutes(ArrayList<Route> routes){
+    static boolean storeRoutes(ArrayList<Route> routes) {
         try {
             String result = new Gson().toJson(routes);
             getInstance().mSharedPreferences.edit().putString("routes", result).apply();
@@ -48,11 +48,12 @@ class SharedPrefs {
     }
 
     // Get routes from local storage.
-    static ArrayList<Route> getRoute(){
+    static ArrayList<Route> getRoute() {
         ArrayList<Route> routeList = new ArrayList<>();
         String result = getInstance().mSharedPreferences.getString("routes", null);
-        if (result != null){
-            routeList = new Gson().fromJson(result, new TypeToken<ArrayList<Route>>() {}.getType());
+        if (result != null) {
+            routeList = new Gson().fromJson(result, new TypeToken<ArrayList<Route>>() {
+            }.getType());
         }
         return routeList;
     }
