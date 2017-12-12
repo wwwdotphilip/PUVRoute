@@ -44,6 +44,7 @@ class Map {
         void onChangeMode(Mode mode);
     }
 
+    // Always call this method before calling other methods to make sure that map is working properly.
     static void init(Context context, GoogleMap map) {
         getInstance().mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
         getInstance().markerPoints = new ArrayList<>();
@@ -163,6 +164,7 @@ class Map {
         return getInstance().mMap;
     }
 
+    // Remove all markers poly line and other object inside the map.
     static void clearMap(){
         if (getInstance().mMap != null) {
             getInstance().mMap.clear();
