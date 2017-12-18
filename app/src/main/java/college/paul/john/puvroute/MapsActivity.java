@@ -62,7 +62,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void loadComplete() {
                 // Do something here once map route initialization is complete.
-                MapRoutes.randomRoute();
+                MapRoutes.randomRoute(); // Todo Remove or comment out this code if you are not testing.
             }
 
             @Override
