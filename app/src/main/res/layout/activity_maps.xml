@@ -45,5 +45,13 @@
             android:layout_height="wrap_content"
             android:onClick="saveMapMaker"
             android:text="@string/save" />
+
+        <Button
+            android:id="@+id/btnSearch"
+            style="?android:attr/buttonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="searchMap"
+            android:text="@string/search" />
     </LinearLayout>
 </RelativeLayout>

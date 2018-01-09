@@ -3,13 +3,12 @@ package college.paul.john.puvroute;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.location.Location;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -30,6 +29,7 @@ class MapRoutes {
     private static volatile MapRoutes instance;
     private ArrayList<Route> routeList;
     private RouteListener mListener;
+    private Place destination;
 
     public interface RouteListener {
         void loadComplete();
@@ -238,6 +238,28 @@ class MapRoutes {
             Random rand = new Random();
             int index = rand.nextInt(routes.size()-1);
             changeRoute(routes.get(index).name);
+        }
+    }
+
+    static void setDestination(Place destination){
+        getInstance().destination = destination;
+        Map.markDestination(destination);
+
+        Double lowestDistance = null;
+        LatLng selected = null;
+        for (Route item :getInstance().routeList) {
+            for (double[] coordinates :item.points.coordinates) {
+                double distance = Utilities.distance(Map.getCurrentLocation().getLatitude(), Map.getCurrentLocation().getLongitude(),
+                        coordinates[0], coordinates[1]);
+                if (lowestDistance == null || lowestDistance > distance){
+                    lowestDistance = distance;
+                    selected = new LatLng(coordinates[0], coordinates[1]);
+                }
+            }
+            Log.i(TAG, "Lowest distance is " + lowestDistance + "km");
+        }
+        if (selected != null){
+            Map.setMarker(selected, "Nearest point");
         }
     }
 }

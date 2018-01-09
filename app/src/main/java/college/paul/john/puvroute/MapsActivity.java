@@ -1,12 +1,19 @@
 package college.paul.john.puvroute;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
 
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -17,6 +24,8 @@ import java.util.ArrayList;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private TextView message;
+    private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
+    private static final String TAG = "MapsActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +71,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void loadComplete() {
                 // Do something here once map route initialization is complete.
-                MapRoutes.randomRoute(); // Todo Remove or comment out this code if you are not testing.
+//                MapRoutes.randomRoute(); // Todo Remove or comment out this code if you are not testing.
             }
 
             @Override
@@ -108,5 +117,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .add(latLng)
                 .width(5)
                 .color(Color.RED));
+    }
+
+    /*
+     Open a search intent to pick your destination.
+     */
+    public void searchMap(View view) {
+        try {
+            Intent intent =
+                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
+                            .build(this);
+            startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+        } catch (GooglePlayServicesRepairableException e) {
+            Log.e(TAG, e.toString());
+        } catch (GooglePlayServicesNotAvailableException e) {
+            Log.e(TAG, e.toString());
+        }
+    }
+
+    /*
+      Listen to any activity result from intent.
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                Place place = PlaceAutocomplete.getPlace(this, data);
+                Log.i(TAG, "Place: " + place.getName());
+                MapRoutes.setDestination(place);
+            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+                Status status = PlaceAutocomplete.getStatus(this, data);
+                Log.i(TAG, status.getStatusMessage());
+
+            } else if (resultCode == RESULT_CANCELED) {
+                // The user canceled the operation.
+                Log.i(TAG, "Cancelled.");
+            }
+        }
     }
 }

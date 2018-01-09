@@ -14,6 +14,7 @@ import android.util.Log;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -39,6 +40,7 @@ class Map {
     private int currentMode = 0;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private OnMapListener mMapListener;
+    private Location currentLocation;
 
     interface OnMapListener{
         void onChangeMode(Mode mode);
@@ -120,6 +122,7 @@ class Map {
                             @Override
                             public void onComplete(@NonNull Task<Location> task) {
                                 if (task.isSuccessful()) {
+                                    getInstance().currentLocation = task.getResult();
                                     CameraPosition cameraPosition = new CameraPosition.Builder()
                                             .target(new LatLng(task.getResult().getLatitude(),
                                                     task.getResult().getLongitude()))   // Sets the center of the map to location user
@@ -227,6 +230,26 @@ class Map {
 
     static void setMapListener(OnMapListener mapListener){
         getInstance().mMapListener = mapListener;
+    }
+
+    static Location getCurrentLocation(){
+        return getInstance().currentLocation;
+    }
+
+    static void markDestination(Place place){
+        MarkerOptions options = new MarkerOptions();
+        options.title(place.getName().toString());
+        options.position(place.getLatLng());
+        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+        getInstance().mMap.addMarker(options).showInfoWindow();
+    }
+
+    static void setMarker(LatLng latLng, String title){
+        MarkerOptions options = new MarkerOptions();
+        options.title(title);
+        options.position(latLng);
+        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+        getInstance().mMap.addMarker(options).showInfoWindow();
     }
 
     class Mode {
