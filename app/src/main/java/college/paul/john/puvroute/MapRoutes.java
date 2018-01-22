@@ -93,7 +93,7 @@ class MapRoutes {
                         String value = String.valueOf(data.getValue());
                         if (data.getKey().equals("description")) {
                             route.description = String.valueOf(data.getValue());
-                        } else if (data.getKey().equals("coordinates")) {
+                        } else if (data.getKey().equals("points")) {
                             route.points = new Gson().fromJson(value, Points.class);
                         }
                     }
@@ -247,7 +247,9 @@ class MapRoutes {
 
         Double lowestDistance = null;
         LatLng selected = null;
-        for (Route item :getInstance().routeList) {
+        ArrayList<Route> routeList = getInstance().routeList;
+        for (Route item : routeList) {
+            Log.i(TAG, "Route " + item.name);
             for (double[] coordinates :item.points.coordinates) {
                 double distance = Utilities.distance(Map.getCurrentLocation().getLatitude(), Map.getCurrentLocation().getLongitude(),
                         coordinates[0], coordinates[1]);
@@ -256,7 +258,7 @@ class MapRoutes {
                     selected = new LatLng(coordinates[0], coordinates[1]);
                 }
             }
-            Log.i(TAG, "Lowest distance is " + lowestDistance + "km");
+            Log.i(TAG, "Lowest distance is " + lowestDistance + " km");
         }
         if (selected != null){
             Map.setMarker(selected, "Nearest point");

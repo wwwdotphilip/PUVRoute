@@ -4,4 +4,6 @@
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="search">Search</string>
+    <string name="map_maker_mode">Map Maker Mode</string>
+    <string name="set_destination">Set Destination…</string>
 </resources>

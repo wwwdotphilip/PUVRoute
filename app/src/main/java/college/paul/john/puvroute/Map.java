@@ -43,7 +43,7 @@ class Map {
     private Location currentLocation;
 
     interface OnMapListener{
-        void onChangeMode(Mode mode);
+        void onChangeMode(int mode);
     }
 
     // Always call this method before calling other methods to make sure that map is working properly.
@@ -75,6 +75,7 @@ class Map {
         getInstance().mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
+                if (getInstance().currentMode == Mode.MAP_MAKER)
                 getInstance().markerPoints.add(latLng);
                 redrawMap();
             }
@@ -94,6 +95,9 @@ class Map {
     // changes behavior when the map changes mode.
     static void setMode(int mode) {
         getInstance().currentMode = mode;
+        if (getInstance().mMapListener != null){
+            getInstance().mMapListener.onChangeMode(mode);
+        }
     }
 
     // Get current map mode.

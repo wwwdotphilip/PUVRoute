@@ -6,9 +6,13 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
+import com.arlib.floatingsearchview.FloatingSearchView;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.Status;
@@ -19,23 +23,61 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.mikepenz.google_material_typeface_library.GoogleMaterial;
+import com.mikepenz.materialdrawer.Drawer;
+import com.mikepenz.materialdrawer.DrawerBuilder;
+import com.mikepenz.materialdrawer.model.DividerDrawerItem;
+import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
+import com.mikepenz.materialdrawer.model.SecondaryDrawerItem;
+import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
 import java.util.ArrayList;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
-    private TextView message;
+    private LinearLayout mMapMakerParent;
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
     private static final String TAG = "MapsActivity";
+    private Drawer mDrawer;
+    private View mMapView;
+    private TextView destination;
+    private View view;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        message = findViewById(R.id.tvMessage);
+        view = findViewById(R.id.layoutSearch);
+        mMapMakerParent = findViewById(R.id.llMapMakerParent);
+        destination = findViewById(R.id.tvDestination);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        mMapView = mapFragment.getView();
+
+        mDrawer = new DrawerBuilder()
+                .withTranslucentStatusBar(true)
+                .withActivity(this)
+                .addDrawerItems(
+                        new PrimaryDrawerItem().withName("PUV Router").withIcon(R.mipmap.ic_launcher),
+                        new DividerDrawerItem(),
+                        new SecondaryDrawerItem().withIdentifier(1).withIcon(GoogleMaterial.Icon.gmd_add).withName("Add Route")
+                )
+                .withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
+
+                    @Override
+                    public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
+                        switch ((int) drawerItem.getIdentifier()){
+                            case 1:
+                                Map.setMode(Map.Mode.MAP_MAKER);
+                                break;
+                            default:
+                                break;
+                        }
+                        return false;
+                    }
+                })
+                .build();
     }
 
     @Override
@@ -61,10 +103,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Map.setMode(Map.Mode.FREE);
         Map.setMapListener(new Map.OnMapListener() {
             @Override
-            public void onChangeMode(Map.Mode mode) {
-                // Do something here when map changes mode.
+            public void onChangeMode(int mode) {
+                switch (mode){
+                    case Map.Mode.FREE:
+                        destination.setText(R.string.set_destination);
+                        mMapMakerParent.setVisibility(View.GONE);
+                        break;
+                    case Map.Mode.MAP_MAKER:
+                        destination.setText(R.string.map_maker_mode);
+                        mMapMakerParent.setVisibility(View.VISIBLE);
+                        break;
+                    case Map.Mode.ROUTE:
+                        mMapMakerParent.setVisibility(View.GONE);
+                        break;
+                    default:
+                        break;
+
+                }
             }
         });
+        if (mMapView != null &&
+                mMapView.findViewById(Integer.parseInt("1")) != null) {
+            // Get the button view
+            View locationButton = ((View) mMapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
+            // and next place it, on bottom right (as Google Maps app)
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
+                    locationButton.getLayoutParams();
+            // position on right bottom
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
+            layoutParams.setMargins(0, 0, 30, 380);
+        }
 
         // Listen to any changes happening to MapRoutes
         MapRoutes.setRouteListener(new MapRoutes.RouteListener() {
@@ -81,7 +150,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             @Override
             public void onChange(Route route) {
-                message.setText(route.name);
+                destination.setText(route.name);
                 updateMapRoute(route);
             }
 
@@ -96,7 +165,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     // Button event for cancel
     public void cancelMapMaker(View view) {
-        Map.clearMap();
+        if (Map.getMode() == Map.Mode.MAP_MAKER){
+            if (Map.getMarkerPoints().size() > 0){
+                Map.clearMap();
+            } else {
+                Map.setMode(Map.Mode.FREE);
+            }
+        }
     }
 
     // Button event for save
@@ -119,20 +194,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .color(Color.RED));
     }
 
-    /*
-     Open a search intent to pick your destination.
-     */
-    public void searchMap(View view) {
+    public void showMapSearch(View view) {
+        /*
+            Open a search intent to pick your destination.
+        */
         try {
             Intent intent =
-                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
-                            .build(this);
+                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
+                            .build(MapsActivity.this);
             startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
         } catch (GooglePlayServicesRepairableException e) {
             Log.e(TAG, e.toString());
         } catch (GooglePlayServicesNotAvailableException e) {
             Log.e(TAG, e.toString());
         }
+    }
+
+    /*
+        Open the navigation drawer
+     */
+    public void showDrawer(View view){
+        mDrawer.openDrawer();
     }
 
     /*
