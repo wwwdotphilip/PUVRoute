@@ -3,6 +3,7 @@ package college.paul.john.puvroute;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.location.Location;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -173,9 +174,9 @@ class MapRoutes {
                         latlong[i][0] = markerPoints.get(i).latitude;
                         latlong[i][1] = markerPoints.get(i).longitude;
                     }
-                    final String points = "{   \"coordinates\":" + new Gson().toJson(latlong) + "}";
+                    final String points = "{   \"points\":" + new Gson().toJson(latlong) + "}";
                     // Send the data to server.
-                    dbRef.child(tempRouteName[0]).child("coordinates")
+                    dbRef.child(tempRouteName[0]).child("points")
                             .setValue(points, new DatabaseReference.CompletionListener() {
                                 @Override
                                 public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
@@ -183,7 +184,7 @@ class MapRoutes {
                                     Route route = new Route();
                                     route.name = tempRouteName[0];
                                     route.points = new Points();
-                                    route.points.coordinates = latlong;
+                                    route.points.points = latlong;
                                     MapRoutes.updateRoute(route);
                                     Toast.makeText(context, "New route saved", Toast.LENGTH_SHORT).show();
                                 }
@@ -234,10 +235,12 @@ class MapRoutes {
     // Display a randomize selection of routes from the routelist..
     static void randomRoute() {
         ArrayList<Route> routes = getInstance().routeList;
-        if (routes.size() > 0) {
+        if (routes.size() > 0 && routes.size() > 1) {
             Random rand = new Random();
             int index = rand.nextInt(routes.size()-1);
             changeRoute(routes.get(index).name);
+        } else if(routes.size() == 1){
+            changeRoute(routes.get(0).name);
         }
     }
 
@@ -248,20 +251,27 @@ class MapRoutes {
         Double lowestDistance = null;
         LatLng selected = null;
         ArrayList<Route> routeList = getInstance().routeList;
+        Route selectedRoute = null;
         for (Route item : routeList) {
             Log.i(TAG, "Route " + item.name);
-            for (double[] coordinates :item.points.coordinates) {
+            for (double[] points :item.points.points) {
                 double distance = Utilities.distance(Map.getCurrentLocation().getLatitude(), Map.getCurrentLocation().getLongitude(),
-                        coordinates[0], coordinates[1]);
+                        points[0], points[1]);
                 if (lowestDistance == null || lowestDistance > distance){
                     lowestDistance = distance;
-                    selected = new LatLng(coordinates[0], coordinates[1]);
+                    selected = new LatLng(points[0], points[1]);
+                    selectedRoute = item;
+                    Log.i(TAG, "Lowest distance is " + item.name + " with " + lowestDistance + " km");
                 }
             }
-            Log.i(TAG, "Lowest distance is " + lowestDistance + " km");
         }
         if (selected != null){
             Map.setMarker(selected, "Nearest point");
+            Location currentLocation = Map.getCurrentLocation();
+            LatLng origin = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+            new Parser.FetchUrl().execute(Parser.getUrl(origin, selected));
+
+            updateRoute(selectedRoute);
         }
     }
 }

@@ -70,7 +70,6 @@ class Map {
         getInstance().mMap.getUiSettings().setZoomControlsEnabled(true);
         getInstance().mMap.getUiSettings().setCompassEnabled(true);
         getInstance().mMap.getUiSettings().setRotateGesturesEnabled(true);
-        getInstance().mMap.getUiSettings().setMapToolbarEnabled(true);
 
         getInstance().mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override

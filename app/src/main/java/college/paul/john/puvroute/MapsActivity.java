@@ -9,10 +9,6 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
-
-
-import com.arlib.floatingsearchview.FloatingSearchView;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.Status;
@@ -67,7 +63,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     @Override
                     public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
-                        switch ((int) drawerItem.getIdentifier()){
+                        switch ((int) drawerItem.getIdentifier()) {
                             case 1:
                                 Map.setMode(Map.Mode.MAP_MAKER);
                                 break;
@@ -104,7 +100,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Map.setMapListener(new Map.OnMapListener() {
             @Override
             public void onChangeMode(int mode) {
-                switch (mode){
+                switch (mode) {
                     case Map.Mode.FREE:
                         destination.setText(R.string.set_destination);
                         mMapMakerParent.setVisibility(View.GONE);
@@ -140,7 +136,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void loadComplete() {
                 // Do something here once map route initialization is complete.
-//                MapRoutes.randomRoute(); // Todo Remove or comment out this code if you are not testing.
+                MapRoutes.randomRoute(); // Todo Remove or comment out this code if you are not testing.
             }
 
             @Override
@@ -165,8 +161,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     // Button event for cancel
     public void cancelMapMaker(View view) {
-        if (Map.getMode() == Map.Mode.MAP_MAKER){
-            if (Map.getMarkerPoints().size() > 0){
+        if (Map.getMode() == Map.Mode.MAP_MAKER) {
+            if (Map.getMarkerPoints().size() > 0) {
                 Map.clearMap();
             } else {
                 Map.setMode(Map.Mode.FREE);
@@ -180,13 +176,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     /*
-     Update google maps direction based on Route coordinates.
+     Update google maps direction based on Route points.
      */
     private void updateMapRoute(Route route) {
         Map.clearMap();
-        LatLng[] latLng = new LatLng[route.points.coordinates.length];
-        for (int i = 0; i < route.points.coordinates.length; i++) {
-            latLng[i] = new LatLng(route.points.coordinates[i][0], route.points.coordinates[i][1]);
+        LatLng[] latLng = new LatLng[route.points.points.length];
+        for (int i = 0; i < route.points.points.length; i++) {
+            latLng[i] = new LatLng(route.points.points[i][0], route.points.points[i][1]);
         }
         Map.getMap().addPolyline(new PolylineOptions()
                 .add(latLng)
@@ -213,7 +209,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     /*
         Open the navigation drawer
      */
-    public void showDrawer(View view){
+    public void showDrawer(View view) {
         mDrawer.openDrawer();
     }
 
