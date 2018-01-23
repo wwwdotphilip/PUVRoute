@@ -54,12 +54,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mDrawer = new DrawerBuilder()
                 .withTranslucentStatusBar(true)
                 .withActivity(this)
+                .withDisplayBelowStatusBar(true)
+                .withOnDrawerListener(new Drawer.OnDrawerListener() {
+                    @Override
+                    public void onDrawerOpened(View drawerView) {
+
+                    }
+
+                    @Override
+                    public void onDrawerClosed(View drawerView) {
+                        mDrawer.setSelection(0);
+                    }
+
+                    @Override
+                    public void onDrawerSlide(View drawerView, float slideOffset) {
+
+                    }
+                })
                 .addDrawerItems(
-                        new PrimaryDrawerItem().withName("PUV Router").withIcon(R.mipmap.ic_launcher),
+                        new PrimaryDrawerItem().withIdentifier(0).withName("PUV Router").withIcon(R.mipmap.ic_launcher),
                         new DividerDrawerItem(),
-                        new SecondaryDrawerItem().withIdentifier(1).withIcon(GoogleMaterial.Icon.gmd_add).withName("Add Route")
-                )
-                .withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
+                        new SecondaryDrawerItem().withIdentifier(1).withIcon(GoogleMaterial.Icon.gmd_add).withName("Add Route"),
+                        new SecondaryDrawerItem().withIdentifier(2).withIcon(GoogleMaterial.Icon.gmd_view_carousel).withName("View All Routes")
+                ).withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
 
                     @Override
                     public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
@@ -67,13 +84,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             case 1:
                                 Map.setMode(Map.Mode.MAP_MAKER);
                                 break;
+                            case 2:
+                                MapRoutes.showRouteList(MapsActivity.this);
+                                break;
                             default:
                                 break;
                         }
                         return false;
                     }
-                })
-                .build();
+                }).build();
     }
 
     @Override
@@ -104,13 +123,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     case Map.Mode.FREE:
                         destination.setText(R.string.set_destination);
                         mMapMakerParent.setVisibility(View.GONE);
+                        destination.setBackgroundColor(Color.WHITE);
                         break;
                     case Map.Mode.MAP_MAKER:
                         destination.setText(R.string.map_maker_mode);
                         mMapMakerParent.setVisibility(View.VISIBLE);
+                        destination.setBackgroundColor(getResources().getColor(R.color.green));
                         break;
                     case Map.Mode.ROUTE:
                         mMapMakerParent.setVisibility(View.GONE);
+                        destination.setBackgroundColor(Color.WHITE);
                         break;
                     default:
                         break;
@@ -136,7 +158,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void loadComplete() {
                 // Do something here once map route initialization is complete.
-                MapRoutes.randomRoute(); // Todo Remove or comment out this code if you are not testing.
+//                MapRoutes.randomRoute(); // Todo Remove or comment out this code if you are not testing.
             }
 
             @Override
@@ -147,7 +169,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onChange(Route route) {
                 destination.setText(route.name);
-                updateMapRoute(route);
             }
 
             @Override
@@ -173,21 +194,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // Button event for save
     public void saveMapMaker(final View view) {
         MapRoutes.addRoute(MapsActivity.this, Map.getMarkerPoints(), false, null);
-    }
-
-    /*
-     Update google maps direction based on Route points.
-     */
-    private void updateMapRoute(Route route) {
-        Map.clearMap();
-        LatLng[] latLng = new LatLng[route.points.points.length];
-        for (int i = 0; i < route.points.points.length; i++) {
-            latLng[i] = new LatLng(route.points.points[i][0], route.points.points[i][1]);
-        }
-        Map.getMap().addPolyline(new PolylineOptions()
-                .add(latLng)
-                .width(5)
-                .color(Color.RED));
     }
 
     public void showMapSearch(View view) {

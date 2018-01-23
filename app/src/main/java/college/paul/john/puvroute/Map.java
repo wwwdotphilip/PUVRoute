@@ -70,13 +70,15 @@ class Map {
         getInstance().mMap.getUiSettings().setZoomControlsEnabled(true);
         getInstance().mMap.getUiSettings().setCompassEnabled(true);
         getInstance().mMap.getUiSettings().setRotateGesturesEnabled(true);
+        clearMap();
 
         getInstance().mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                if (getInstance().currentMode == Mode.MAP_MAKER)
-                getInstance().markerPoints.add(latLng);
-                redrawMap();
+                if (getInstance().currentMode == Mode.MAP_MAKER){
+                    getInstance().markerPoints.add(latLng);
+                    redrawMap();
+                }
             }
         });
     }
@@ -158,7 +160,7 @@ class Map {
             if (getInstance().markerPoints.size() > 1) {
                 getInstance().mMap.addPolyline(new PolylineOptions()
                         .add(point)
-                        .width(5)
+                        .width(10)
                         .color(Color.RED));
             }
         } else {
@@ -253,6 +255,21 @@ class Map {
         options.position(latLng);
         options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         getInstance().mMap.addMarker(options).showInfoWindow();
+    }
+
+    /*
+     Update google maps direction based on Route points.
+     */
+    static void redrawMap(Route route) {
+        clearMap();
+        LatLng[] latLng = new LatLng[route.points.points.length];
+        for (int i = 0; i < route.points.points.length; i++) {
+            latLng[i] = new LatLng(route.points.points[i][0], route.points.points[i][1]);
+        }
+        getInstance().mMap.addPolyline(new PolylineOptions()
+                .add(latLng)
+                .width(10)
+                .color(Color.RED));
     }
 
     class Mode {

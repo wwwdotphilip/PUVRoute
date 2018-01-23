@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.location.Location;
 import android.util.Log;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -96,6 +97,8 @@ class MapRoutes {
                             route.description = String.valueOf(data.getValue());
                         } else if (data.getKey().equals("points")) {
                             route.points = new Gson().fromJson(value, Points.class);
+                        } else if (data.getKey().equals("id")){
+                            route.id = String.valueOf(data.getValue());
                         }
                     }
                     getInstance().routeList.add(route);
@@ -175,7 +178,9 @@ class MapRoutes {
                         latlong[i][1] = markerPoints.get(i).longitude;
                     }
                     final String points = "{   \"points\":" + new Gson().toJson(latlong) + "}";
+                    final String key = dbRef.push().getKey();
                     // Send the data to server.
+                    dbRef.child(tempRouteName[0]).child("id").setValue(key);
                     dbRef.child(tempRouteName[0]).child("points")
                             .setValue(points, new DatabaseReference.CompletionListener() {
                                 @Override
@@ -185,7 +190,10 @@ class MapRoutes {
                                     route.name = tempRouteName[0];
                                     route.points = new Points();
                                     route.points.points = latlong;
+                                    route.id = key;
                                     MapRoutes.updateRoute(route);
+                                    Map.setMode(Map.Mode.FREE);
+                                    Map.clearMap();
                                     Toast.makeText(context, "New route saved", Toast.LENGTH_SHORT).show();
                                 }
                             });
@@ -217,10 +225,10 @@ class MapRoutes {
     }
 
     // Change to a new route.
-    static void changeRoute(String routeName) {
+    static void changeRoute(String id) {
         Route route = null;
         for (Route item : getInstance().routeList) {
-            if (item.name.equals(routeName)) {
+            if (item.id.equals(id)) {
                 route = item;
                 break;
             }
@@ -229,6 +237,7 @@ class MapRoutes {
             if (getInstance().mListener != null) {
                 getInstance().mListener.onChange(route);
             }
+            Map.redrawMap(route);
         }
     }
 
@@ -238,9 +247,9 @@ class MapRoutes {
         if (routes.size() > 0 && routes.size() > 1) {
             Random rand = new Random();
             int index = rand.nextInt(routes.size()-1);
-            changeRoute(routes.get(index).name);
+            changeRoute(routes.get(index).id);
         } else if(routes.size() == 1){
-            changeRoute(routes.get(0).name);
+            changeRoute(routes.get(0).id);
         }
     }
 
@@ -273,5 +282,32 @@ class MapRoutes {
 
             updateRoute(selectedRoute);
         }
+    }
+
+    static void showRouteList(final Context context){
+        AlertDialog.Builder builderSingle = new AlertDialog.Builder(context);
+        builderSingle.setIcon(R.mipmap.ic_launcher);
+        builderSingle.setTitle("Route List");
+
+        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(context, android.R.layout.select_dialog_singlechoice);
+        for (Route item : getInstance().routeList) {
+            arrayAdapter.add(item.name);
+        }
+
+        builderSingle.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        builderSingle.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Route route = getInstance().routeList.get(which);
+                changeRoute(route.id);
+            }
+        });
+        builderSingle.show();
     }
 }
