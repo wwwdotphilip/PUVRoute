@@ -9,6 +9,8 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.Status;
@@ -232,7 +234,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Place place = PlaceAutocomplete.getPlace(this, data);
                 Log.i(TAG, "Place: " + place.getName());
                 Map.setMode(Map.Mode.ROUTE);
-                MapRoutes.setDestination(place);
+                if (MapRoutes.getRouteList().size() > 0) {
+                    MapRoutes.setDestination(place);
+                } else {
+                    Toast.makeText(getApplicationContext(), "No routes found", Toast.LENGTH_SHORT).show();
+                }
             } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
                 Status status = PlaceAutocomplete.getStatus(this, data);
                 Log.i(TAG, status.getStatusMessage());
