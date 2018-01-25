@@ -82,6 +82,7 @@ class MapRoutes {
     // Download routes from firebase server.
     static void downloadFromServer() {
         // Download and use firebase database.
+        getInstance().routeList.clear();
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference("route");
         myRef.addValueEventListener(new ValueEventListener() {
@@ -190,12 +191,7 @@ class MapRoutes {
                                 @Override
                                 public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                                     // The new data has been save to the server.
-                                    Route route = new Route();
-                                    route.name = tempRouteName[0];
-                                    route.points = new Points();
-                                    route.points.points = latlong;
-                                    route.id = key;
-                                    MapRoutes.updateRoute(route);
+                                    downloadFromServer();
                                     Map.setMode(Map.Mode.FREE);
                                     Map.clearMap();
                                     Toast.makeText(context, "New route saved", Toast.LENGTH_SHORT).show();
