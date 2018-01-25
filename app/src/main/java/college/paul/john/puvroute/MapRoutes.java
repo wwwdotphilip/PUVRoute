@@ -1,6 +1,7 @@
 package college.paul.john.puvroute;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.location.Location;
@@ -11,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.location.places.Place;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -31,7 +33,6 @@ class MapRoutes {
     private static volatile MapRoutes instance;
     private ArrayList<Route> routeList;
     private RouteListener mListener;
-    private Place destination;
 
     public interface RouteListener {
         void loadComplete();
@@ -158,6 +159,9 @@ class MapRoutes {
                     Toast.makeText(context, "Route name is empty", Toast.LENGTH_SHORT).show();
                     addRoute(context, markerPoints, confirmation, routeName);
                 } else {
+                    final ProgressDialog progressDialog = new ProgressDialog(context);
+                    progressDialog.setMessage("Updating database");
+                    progressDialog.show();
                     if (!confirmation) {
                         for (Route item : getInstance().routeList) {
                             if (item.name.equals(tempRouteName[0])) {
@@ -195,6 +199,7 @@ class MapRoutes {
                                     Map.setMode(Map.Mode.FREE);
                                     Map.clearMap();
                                     Toast.makeText(context, "New route saved", Toast.LENGTH_SHORT).show();
+                                    progressDialog.dismiss();
                                 }
                             });
                 }
@@ -212,10 +217,20 @@ class MapRoutes {
 
     // Update route list and store to local storage.
     static void updateRoute(Route route) {
-        getInstance().routeList.add(route);
-        SharedPrefs.storeRoutes(getInstance().routeList);
-        if (getInstance().mListener != null) {
-            getInstance().mListener.onUpdate(getInstance().routeList);
+        Log.v(TAG, "Updating route");
+        boolean skip = false;
+        for (Route item : getInstance().routeList){
+            if (item.id.equals(route.id)){
+                skip = true;
+                break;
+            }
+        }
+        if (!skip) {
+            getInstance().routeList.add(route);
+            SharedPrefs.storeRoutes(getInstance().routeList);
+            if (getInstance().mListener != null) {
+                getInstance().mListener.onUpdate(getInstance().routeList);
+            }
         }
     }
 
@@ -254,34 +269,49 @@ class MapRoutes {
     }
 
     static void setDestination(Place destination){
-        getInstance().destination = destination;
-        Map.markDestination(destination);
-
+        Double[] shortestPath = new Double[2];
         Double lowestDistance = null;
+        Double lowestOrigin = null;
         LatLng selected = null;
         ArrayList<Route> routeList = getInstance().routeList;
         Route selectedRoute = null;
+        Location currentLocation = Map.getCurrentLocation();
         for (Route item : routeList) {
             Log.i(TAG, "Route " + item.name);
             for (double[] points :item.points.points) {
-                double distance = Utilities.distance(Map.getCurrentLocation().getLatitude(), Map.getCurrentLocation().getLongitude(),
-                        points[0], points[1]);
-                if (lowestDistance == null || lowestDistance > distance){
-                    lowestDistance = distance;
+                double destinationDistance = Utilities.distance(destination.getLatLng().latitude, destination.getLatLng().longitude, points[0], points[1]);
+                if (lowestDistance == null || lowestDistance > destinationDistance){
+                    lowestDistance = destinationDistance;
                     selected = new LatLng(points[0], points[1]);
                     selectedRoute = item;
-                    Log.i(TAG, "Lowest distance is " + item.name + " with " + lowestDistance + " km");
                 }
             }
         }
         if (selected != null){
-            Map.setMarker(selected, "Nearest point");
-            Location currentLocation = Map.getCurrentLocation();
-            LatLng origin = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-            new Parser.FetchUrl().execute(Parser.getUrl(origin, selected));
-
-            updateRoute(selectedRoute);
+            changeRoute(selectedRoute.id);
+            LatLng origin = new LatLng(selected.latitude, selected.longitude);
+            LatLng dest = new LatLng(destination.getLatLng().latitude, destination.getLatLng().longitude);
+            new Parser.FetchUrl().execute(Parser.getUrl(origin, dest));
         }
+        if (selectedRoute != null){
+            for (double[] points : selectedRoute.points.points) {
+                double originDistance = Utilities.distance(currentLocation.getLatitude(), currentLocation.getLongitude(),
+                        points[0], points[1]);
+                if (lowestOrigin == null || lowestOrigin > originDistance){
+                    lowestOrigin = originDistance;
+                    shortestPath[0] = points[0];
+                    shortestPath[1] = points[1];
+                }
+            }
+        }
+        if (shortestPath.length > 1) {
+            LatLng origin = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+            LatLng dest = new LatLng(shortestPath[0], shortestPath[1]);
+            new Parser.FetchUrl().execute(Parser.getUrl(origin, dest));
+        }
+        Map.setMarker(destination.getLatLng(), "Destination: " + destination.getName(),
+                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+        Map.focusSelf();
     }
 
     static void showRouteList(final Context context){
@@ -289,8 +319,8 @@ class MapRoutes {
         builderSingle.setIcon(R.mipmap.ic_launcher);
         builderSingle.setTitle("Route List");
 
-        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(context, android.R.layout.select_dialog_singlechoice);
-        for (Route item : getInstance().routeList) {
+        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(context, android.R.layout.select_dialog_item);
+        for (Route item : getRouteList()) {
             arrayAdapter.add(item.name);
         }
 
@@ -304,8 +334,10 @@ class MapRoutes {
         builderSingle.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                Map.setMode(Map.Mode.FREE);
                 Route route = getInstance().routeList.get(which);
                 changeRoute(route.id);
+                Map.moveCamera(new LatLng(route.points.points[0][0], route.points.points[0][1]));
             }
         });
         builderSingle.show();

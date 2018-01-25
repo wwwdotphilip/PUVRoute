@@ -1,12 +1,13 @@
 package college.paul.john.puvroute;
 
-import android.*;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -14,15 +15,17 @@ import android.util.Log;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.ButtCap;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.RoundCap;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
@@ -128,12 +131,7 @@ class Map {
                             public void onComplete(@NonNull Task<Location> task) {
                                 if (task.isSuccessful()) {
                                     getInstance().currentLocation = task.getResult();
-                                    CameraPosition cameraPosition = new CameraPosition.Builder()
-                                            .target(new LatLng(task.getResult().getLatitude(),
-                                                    task.getResult().getLongitude()))   // Sets the center of the map to location user
-                                            .zoom(17)   // Sets the zoom
-                                            .build();
-                                    getInstance().mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                                    moveCamera(new LatLng(task.getResult().getLatitude(), task.getResult().getLongitude()));
                                 }
                             }
                         });
@@ -141,6 +139,15 @@ class Map {
                 Log.e(TAG, "Map has not been initialize. Call Map.setMap(GoogleMap)");
             }
         }
+    }
+
+    static void moveCamera(LatLng latLng) {
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(latLng)   // Sets the center of the map to location user
+                .zoom(17)   // Sets the zoom
+                .build();
+        getInstance().mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        Log.e(TAG, "Move camera.");
     }
 
     // Redraw the entire map. All old data are replaced.
@@ -161,7 +168,9 @@ class Map {
                 getInstance().mMap.addPolyline(new PolylineOptions()
                         .add(point)
                         .width(10)
-                        .color(Color.RED));
+                        .color(Color.RED)
+                        .startCap(new RoundCap())
+                        .endCap(new ButtCap()));
             }
         } else {
             Log.e(TAG, "Map has not been initialize. Call Map.setMap(GoogleMap)");
@@ -241,19 +250,14 @@ class Map {
         return getInstance().currentLocation;
     }
 
-    static void markDestination(Place place){
-        MarkerOptions options = new MarkerOptions();
-        options.title(place.getName().toString());
-        options.position(place.getLatLng());
-        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-        getInstance().mMap.addMarker(options).showInfoWindow();
-    }
-
-    static void setMarker(LatLng latLng, String title){
+    static void setMarker(LatLng latLng, String title, BitmapDescriptor icon){
+        if (icon == null){
+            icon = BitmapDescriptorFactory.defaultMarker();
+        }
         MarkerOptions options = new MarkerOptions();
         options.title(title);
         options.position(latLng);
-        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+        options.icon(icon);
         getInstance().mMap.addMarker(options).showInfoWindow();
     }
 
@@ -266,10 +270,19 @@ class Map {
         for (int i = 0; i < route.points.points.length; i++) {
             latLng[i] = new LatLng(route.points.points[i][0], route.points.points[i][1]);
         }
+        if (Mode.FREE == getInstance().currentMode){
+            setMarker(latLng[latLng.length-1], "End of Route", BitmapDescriptorFactory.fromBitmap(Icon.getFinish()));
+            setMarker(latLng[0], "Start of Route", BitmapDescriptorFactory.fromBitmap(Icon.getStart()));
+        }
         getInstance().mMap.addPolyline(new PolylineOptions()
                 .add(latLng)
                 .width(10)
                 .color(Color.RED));
+    }
+
+    static void focusSelf(){
+        LatLng latLng = new LatLng(getCurrentLocation().getLatitude(), getCurrentLocation().getLongitude());
+        moveCamera(latLng);
     }
 
     class Mode {

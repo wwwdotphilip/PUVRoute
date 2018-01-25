@@ -1,5 +1,8 @@
 package college.paul.john.puvroute;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
 public class Utilities {
 
     public static double distance(double lat1, double lon1, double lat2, double lon2) {

@@ -36,13 +36,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Drawer mDrawer;
     private View mMapView;
     private TextView destination;
-    private View view;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        view = findViewById(R.id.layoutSearch);
+        Icon.init(this);
         mMapMakerParent = findViewById(R.id.llMapMakerParent);
         destination = findViewById(R.id.tvDestination);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -82,9 +81,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
                         switch ((int) drawerItem.getIdentifier()) {
                             case 1:
+                                Map.clearMap();
                                 Map.setMode(Map.Mode.MAP_MAKER);
                                 break;
                             case 2:
+                                Map.setMode(Map.Mode.ROUTE);
                                 MapRoutes.showRouteList(MapsActivity.this);
                                 break;
                             default:
@@ -200,15 +201,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         /*
             Open a search intent to pick your destination.
         */
-        try {
-            Intent intent =
-                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
-                            .build(MapsActivity.this);
-            startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
-        } catch (GooglePlayServicesRepairableException e) {
-            Log.e(TAG, e.toString());
-        } catch (GooglePlayServicesNotAvailableException e) {
-            Log.e(TAG, e.toString());
+        if (Map.getMode() != Map.Mode.MAP_MAKER) {
+            try {
+                Intent intent =
+                        new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
+                                .build(MapsActivity.this);
+                startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+            } catch (GooglePlayServicesRepairableException e) {
+                Log.e(TAG, e.toString());
+            } catch (GooglePlayServicesNotAvailableException e) {
+                Log.e(TAG, e.toString());
+            }
         }
     }
 
@@ -228,6 +231,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (resultCode == RESULT_OK) {
                 Place place = PlaceAutocomplete.getPlace(this, data);
                 Log.i(TAG, "Place: " + place.getName());
+                Map.setMode(Map.Mode.ROUTE);
                 MapRoutes.setDestination(place);
             } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
                 Status status = PlaceAutocomplete.getStatus(this, data);
