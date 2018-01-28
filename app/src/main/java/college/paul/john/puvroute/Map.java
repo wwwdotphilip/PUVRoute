@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
@@ -111,7 +112,7 @@ class Map {
     }
 
     // Update your map and display your current location.
-    private static void getLastLocation(Context context) {
+    private static void getLastLocation(final Context context) {
         if (getInstance().mFusedLocationProviderClient != null) {
          /*
           Call permission dialog for user to allow or dennie.
@@ -130,9 +131,15 @@ class Map {
                         .addOnCompleteListener((Activity) context, new OnCompleteListener<Location>() {
                             @Override
                             public void onComplete(@NonNull Task<Location> task) {
-                                if (task.isSuccessful()) {
-                                    getInstance().currentLocation = task.getResult();
-                                    moveCamera(new LatLng(task.getResult().getLatitude(), task.getResult().getLongitude()));
+                                try {
+                                    if (task.isSuccessful()) {
+                                        getInstance().currentLocation = task.getResult();
+                                        moveCamera(new LatLng(task.getResult().getLatitude(), task.getResult().getLongitude()));
+                                    }
+                                } catch (Exception e) {
+                                    Activity activity = (Activity) context;
+                                    Snackbar.make(activity.getWindow().getDecorView().findViewById(android.R.id.content),
+                                            "Cannot find your location. Enable Location and Internet service", Snackbar.LENGTH_LONG).show();
                                 }
                             }
                         });
