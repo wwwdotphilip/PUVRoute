@@ -5,7 +5,6 @@ import android.os.AsyncTask;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.ButtCap;
-import com.google.android.gms.maps.model.Dash;
 import com.google.android.gms.maps.model.Dot;
 import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.LatLng;
@@ -143,7 +142,6 @@ public class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<Str
 
         /**
          * Method to decode polyline points
-         * Courtesy : https://jeffreysambells.com/2010/05/27/decoding-polylines-from-google-maps-direction-api-with-java
          * */
         private List<LatLng> decodePoly(String encoded) {
 

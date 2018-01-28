@@ -2,13 +2,16 @@ package college.paul.john.puvroute;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 
 class Icon {
     private static Bitmap finish;
     private static Bitmap start;
 
+    /*
+        Warning this must be initialize before calling any function from this class.
+        This will initially load the contents of the icons.
+     */
     static void init(Context context) {
         int height = 100;
         int width = 100;
@@ -21,10 +24,16 @@ class Icon {
         start = Bitmap.createScaledBitmap(b, width, height, false);
     }
 
+    /*
+        Get the finish icon.
+     */
     static Bitmap getFinish() {
         return finish;
     }
 
+    /*
+        Get the start icon.
+     */
     static Bitmap getStart() {
         return start;
     }

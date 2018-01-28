@@ -21,8 +21,6 @@ import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
@@ -31,7 +29,8 @@ import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.SecondaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
-import java.util.ArrayList;
+import college.paul.john.puvroute.model.Mode;
+import college.paul.john.puvroute.model.Route;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private LinearLayout mMapMakerParent;
@@ -56,6 +55,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
         mMapView = mapFragment.getView();
 
+        // Create the drawer object.
         mDrawer = new DrawerBuilder()
                 .withTranslucentStatusBar(true)
                 .withActivity(this)
@@ -90,14 +90,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         switch ((int) drawerItem.getIdentifier()) {
                             case 1:
                                 Map.clearMap();
-                                Map.setMode(Map.Mode.MAP_MAKER);
+                                Map.setMode(Mode.MAP_MAKER);
                                 break;
                             case 2:
                                 Map.clearMap();
                                 MapRoutes.showRemoveRouteList(MapsActivity.this);
                                 break;
                             case 3:
-                                Map.setMode(Map.Mode.ROUTE);
+                                Map.setMode(Mode.ROUTE);
                                 MapRoutes.showRouteList(MapsActivity.this);
                                 break;
                             case 4:
@@ -131,22 +131,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         Map.init(MapsActivity.this, googleMap);
-        Map.setMode(Map.Mode.FREE);
+        Map.setMode(Mode.FREE);
         Map.setMapListener(new Map.OnMapListener() {
             @Override
             public void onChangeMode(int mode) {
                 switch (mode) {
-                    case Map.Mode.FREE:
+                    case Mode.FREE:
                         destination.setText(R.string.set_destination);
                         mMapMakerParent.setVisibility(View.GONE);
                         destination.setBackgroundColor(Color.WHITE);
                         break;
-                    case Map.Mode.MAP_MAKER:
+                    case Mode.MAP_MAKER:
                         destination.setText(R.string.map_maker_mode);
                         mMapMakerParent.setVisibility(View.VISIBLE);
                         destination.setBackgroundColor(getResources().getColor(R.color.green));
                         break;
-                    case Map.Mode.ROUTE:
+                    case Mode.ROUTE:
                         mMapMakerParent.setVisibility(View.GONE);
                         destination.setBackgroundColor(Color.WHITE);
                         break;
@@ -195,11 +195,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onChange(Route route) {
                 destination.setText(route.name);
             }
-
-            @Override
-            public void onUpdate(ArrayList<Route> routes) {
-                // Do something here when route list has been updated.
-            }
         });
         // Load map routes from server or local file.
         MapRoutes.loadRoutes();
@@ -207,11 +202,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     // Button event for cancel
     public void cancelMapMaker(View view) {
-        if (Map.getMode() == Map.Mode.MAP_MAKER) {
+        if (Map.getMode() == Mode.MAP_MAKER) {
             if (Map.getMarkerPoints().size() > 0) {
                 Map.clearMap();
             } else {
-                Map.setMode(Map.Mode.FREE);
+                Map.setMode(Mode.FREE);
             }
         }
     }
@@ -225,7 +220,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         /*
             Open a search intent to pick your destination.
         */
-        if (Map.getMode() != Map.Mode.MAP_MAKER) {
+        if (Map.getMode() != Mode.MAP_MAKER) {
             try {
                 Intent intent =
                         new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
@@ -254,9 +249,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 Place place = PlaceAutocomplete.getPlace(this, data);
-                Log.i(TAG, "Place: " + place.getName());
-                Map.setMode(Map.Mode.ROUTE);
+
+                Map.setMode(Mode.ROUTE);
                 if (MapRoutes.getRouteList().size() > 0) {
+                    // If route is found we set the destination.
                     MapRoutes.setDestination(place);
                 } else {
                     Toast.makeText(getApplicationContext(), "No routes found", Toast.LENGTH_SHORT).show();

@@ -5,9 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -30,6 +28,9 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
+
+import college.paul.john.puvroute.model.Mode;
+import college.paul.john.puvroute.model.Route;
 
 /*
     This class handles all Google map view activities
@@ -177,6 +178,7 @@ class Map {
         }
     }
 
+    // Get the instance of the map
     static GoogleMap getMap(){
         return getInstance().mMap;
     }
@@ -191,10 +193,12 @@ class Map {
         }
     }
 
+    // Get marker points stored.
     static ArrayList<LatLng> getMarkerPoints(){
         return getInstance().markerPoints;
     }
 
+    // Private class that listen to to marker events.
     private static class MarkerClickListener implements GoogleMap.OnMarkerClickListener {
 
         Context context;
@@ -242,14 +246,17 @@ class Map {
         }
     }
 
+    // Must be call in order for Activity to listen to any events involving the Map class.
     static void setMapListener(OnMapListener mapListener){
         getInstance().mMapListener = mapListener;
     }
 
+    // Get your current location and return as Location class.
     static Location getCurrentLocation(){
         return getInstance().currentLocation;
     }
 
+    // Set marker on the map.
     static void setMarker(LatLng latLng, String title, BitmapDescriptor icon){
         if (icon == null){
             icon = BitmapDescriptorFactory.defaultMarker();
@@ -280,14 +287,9 @@ class Map {
                 .color(Color.RED));
     }
 
+    // Move screen to you current location.
     static void focusSelf(){
         LatLng latLng = new LatLng(getCurrentLocation().getLatitude(), getCurrentLocation().getLongitude());
         moveCamera(latLng);
-    }
-
-    class Mode {
-        static final int FREE = 0;
-        static final int ROUTE = 1;
-        static final int MAP_MAKER = 2;
     }
 }

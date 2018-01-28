@@ -27,7 +27,10 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
-import java.util.Random;
+
+import college.paul.john.puvroute.model.Mode;
+import college.paul.john.puvroute.model.Points;
+import college.paul.john.puvroute.model.Route;
 
 /*
     This class is the bridge between the ui and backend of the app
@@ -47,8 +50,6 @@ class MapRoutes {
         void onError(String error);
 
         void onChange(Route route);
-
-        void onUpdate(ArrayList<Route> routes);
     }
 
     private MapRoutes() {
@@ -202,7 +203,7 @@ class MapRoutes {
                                 public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                                     // The new data has been save to the server.
                                     downloadFromServer();
-                                    Map.setMode(Map.Mode.FREE);
+                                    Map.setMode(Mode.FREE);
                                     Map.clearMap();
                                     final Activity activity = (Activity) context;
                                     Snackbar.make(activity.getWindow().getDecorView().findViewById(android.R.id.content),
@@ -221,25 +222,6 @@ class MapRoutes {
         });
         builder.create();
         builder.show();
-    }
-
-    // Update route list and store to local storage.
-    static void updateRoute(Route route) {
-        Log.v(TAG, "Updating route");
-        boolean skip = false;
-        for (Route item : getInstance().routeList){
-            if (item.id.equals(route.id)){
-                skip = true;
-                break;
-            }
-        }
-        if (!skip) {
-            getInstance().routeList.add(route);
-            SharedPrefs.storeRoutes(getInstance().routeList);
-            if (getInstance().mListener != null) {
-                getInstance().mListener.onUpdate(getInstance().routeList);
-            }
-        }
     }
 
     // Get list of routes.
@@ -264,18 +246,7 @@ class MapRoutes {
         }
     }
 
-    // Display a randomize selection of routes from the routelist..
-    static void randomRoute() {
-        ArrayList<Route> routes = getInstance().routeList;
-        if (routes.size() > 0 && routes.size() > 1) {
-            Random rand = new Random();
-            int index = rand.nextInt(routes.size()-1);
-            changeRoute(routes.get(index).id);
-        } else if(routes.size() == 1){
-            changeRoute(routes.get(0).id);
-        }
-    }
-
+    //Set your destination based on Place class
     static void setDestination(Place destination){
         Double[] shortestPath = new Double[2];
         Double lowestDistance = null;
@@ -284,8 +255,9 @@ class MapRoutes {
         ArrayList<Route> routeList = getInstance().routeList;
         Route selectedRoute = null;
         Location currentLocation = Map.getCurrentLocation();
+
+        //Loop though the list and calculate the lowest distance from destination to the points of route list
         for (Route item : routeList) {
-            Log.i(TAG, "Route " + item.name);
             for (double[] points :item.points.points) {
                 double destinationDistance = Utilities.distance(destination.getLatLng().latitude, destination.getLatLng().longitude, points[0], points[1]);
                 if (lowestDistance == null || lowestDistance > destinationDistance){
@@ -295,12 +267,16 @@ class MapRoutes {
                 }
             }
         }
+
+        // If a coorditane is determine we will request Google api to create a direction.
         if (selected != null){
             changeRoute(selectedRoute.id);
             LatLng origin = new LatLng(selected.latitude, selected.longitude);
             LatLng dest = new LatLng(destination.getLatLng().latitude, destination.getLatLng().longitude);
             new Parser.FetchUrl().execute(Parser.getUrl(origin, dest));
         }
+
+        // Get the shortest path from our current location to the nearest point of the selected route.
         if (selectedRoute != null){
             for (double[] points : selectedRoute.points.points) {
                 double originDistance = Utilities.distance(currentLocation.getLatitude(), currentLocation.getLongitude(),
@@ -312,6 +288,8 @@ class MapRoutes {
                 }
             }
         }
+
+        // Once shortest path has been determine we will request a direction from Google.
         if (shortestPath.length > 1) {
             LatLng origin = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
             LatLng dest = new LatLng(shortestPath[0], shortestPath[1]);
@@ -322,12 +300,14 @@ class MapRoutes {
         Map.focusSelf();
     }
 
+    // Show a list of all routes available.
     static void showRouteList(final Context context){
         AlertDialog.Builder builderSingle = new AlertDialog.Builder(context);
         builderSingle.setIcon(R.mipmap.ic_launcher);
         builderSingle.setTitle("Route List");
 
         final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(context, android.R.layout.select_dialog_item);
+        // Loop through the list of routes and add the items name in arrayAdapter.
         for (Route item : getRouteList()) {
             arrayAdapter.add(item.name);
         }
@@ -342,7 +322,8 @@ class MapRoutes {
         builderSingle.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Map.setMode(Map.Mode.FREE);
+                // Display the route selected in the map
+                Map.setMode(Mode.FREE);
                 Route route = getInstance().routeList.get(which);
                 changeRoute(route.id);
                 Map.moveCamera(new LatLng(route.points.points[0][0], route.points.points[0][1]));
@@ -351,12 +332,14 @@ class MapRoutes {
         builderSingle.show();
     }
 
+    // Displays list of routes that can be remove.
     static void showRemoveRouteList(final Context context){
         AlertDialog.Builder builderSingle = new AlertDialog.Builder(context);
         builderSingle.setIcon(R.mipmap.ic_launcher);
         builderSingle.setTitle("Select Route To Remove");
 
         final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(context, android.R.layout.select_dialog_item);
+        // Loop through the list of routes and add the items name in arrayAdapter.
         for (Route item : getRouteList()) {
             arrayAdapter.add(item.name);
         }
@@ -371,7 +354,7 @@ class MapRoutes {
         builderSingle.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Map.setMode(Map.Mode.FREE);
+                Map.setMode(Mode.FREE);
                 final Route route = getInstance().routeList.get(which);
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setTitle("Alert");
@@ -382,9 +365,16 @@ class MapRoutes {
                         final ProgressDialog progressDialog = new ProgressDialog(context);
                         progressDialog.setMessage("Deleting route.");
                         progressDialog.show();
+
+                        // Initialize Firebase database.
                         FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+                        // Select route child.
                         DatabaseReference dbRef = database.getReference("route");
                         final Activity activity = (Activity) context;
+
+                        //Loop though the list and check if item.id is equal to the seleted route from the list
+                        //and perform the delete action if so.
                         for (Route item : getInstance().routeList) {
                             if (item.id.equals(route.id)) {
                                 dbRef.child(item.name).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {

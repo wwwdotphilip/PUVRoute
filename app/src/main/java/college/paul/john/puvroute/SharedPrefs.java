@@ -8,6 +8,8 @@ import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
 
+import college.paul.john.puvroute.model.Route;
+
 /*
     This class is responsible for storing and acquiring route data locally.
     All local storage should be done here.
