@@ -1,8 +1,10 @@
 package college.paul.john.puvroute;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
@@ -38,12 +40,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Drawer mDrawer;
     private View mMapView;
     private TextView destination;
+    ProgressDialog mProgressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         Icon.init(this);
+        mProgressDialog = new ProgressDialog(this);
         mMapMakerParent = findViewById(R.id.llMapMakerParent);
         destination = findViewById(R.id.tvDestination);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -76,7 +80,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         new PrimaryDrawerItem().withIdentifier(0).withName("PUV Router").withIcon(R.mipmap.ic_launcher),
                         new DividerDrawerItem(),
                         new SecondaryDrawerItem().withIdentifier(1).withIcon(GoogleMaterial.Icon.gmd_add).withName("Add Route"),
-                        new SecondaryDrawerItem().withIdentifier(2).withIcon(GoogleMaterial.Icon.gmd_view_carousel).withName("View All Routes")
+                        new SecondaryDrawerItem().withIdentifier(2).withIcon(GoogleMaterial.Icon.gmd_remove).withName("Remove Route"),
+                        new SecondaryDrawerItem().withIdentifier(3).withIcon(GoogleMaterial.Icon.gmd_view_carousel).withName("View All Routes"),
+                        new SecondaryDrawerItem().withIdentifier(4).withIcon(GoogleMaterial.Icon.gmd_update).withName("Download latest route")
                 ).withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
 
                     @Override
@@ -87,8 +93,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 Map.setMode(Map.Mode.MAP_MAKER);
                                 break;
                             case 2:
+                                Map.clearMap();
+                                MapRoutes.showRemoveRouteList(MapsActivity.this);
+                                break;
+                            case 3:
                                 Map.setMode(Map.Mode.ROUTE);
                                 MapRoutes.showRouteList(MapsActivity.this);
+                                break;
+                            case 4:
+                                MapRoutes.downloadFromServer();
                                 break;
                             default:
                                 break;
@@ -159,9 +172,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Listen to any changes happening to MapRoutes
         MapRoutes.setRouteListener(new MapRoutes.RouteListener() {
             @Override
+            public void onStart() {
+                mProgressDialog.setMessage("Downloading database.");
+                mProgressDialog.show();
+            }
+
+            @Override
             public void loadComplete() {
-                // Do something here once map route initialization is complete.
-//                MapRoutes.randomRoute(); // Todo Remove or comment out this code if you are not testing.
+                if (mProgressDialog.isShowing()){
+                    mProgressDialog.dismiss();
+                }
+                Snackbar.make(getWindow().getDecorView().findViewById(android.R.id.content),
+                        "Route updated.", Snackbar.LENGTH_SHORT).show();
             }
 
             @Override

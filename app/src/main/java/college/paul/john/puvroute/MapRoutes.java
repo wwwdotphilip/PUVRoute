@@ -1,10 +1,13 @@
 package college.paul.john.puvroute;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.location.Location;
+import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -14,6 +17,8 @@ import android.widget.Toast;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -35,6 +40,8 @@ class MapRoutes {
     private RouteListener mListener;
 
     public interface RouteListener {
+        void onStart();
+
         void loadComplete();
 
         void onError(String error);
@@ -82,6 +89,9 @@ class MapRoutes {
     // Download routes from firebase server.
     static void downloadFromServer() {
         // Download and use firebase database.
+        if (getInstance().mListener != null){
+            getInstance().mListener.onStart();
+        }
         getInstance().routeList.clear();
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference("route");
@@ -194,7 +204,9 @@ class MapRoutes {
                                     downloadFromServer();
                                     Map.setMode(Map.Mode.FREE);
                                     Map.clearMap();
-                                    Toast.makeText(context, "New route saved", Toast.LENGTH_SHORT).show();
+                                    final Activity activity = (Activity) context;
+                                    Snackbar.make(activity.getWindow().getDecorView().findViewById(android.R.id.content),
+                                            "New route saved", Snackbar.LENGTH_SHORT).show();
                                     progressDialog.dismiss();
                                 }
                             });
@@ -334,6 +346,68 @@ class MapRoutes {
                 Route route = getInstance().routeList.get(which);
                 changeRoute(route.id);
                 Map.moveCamera(new LatLng(route.points.points[0][0], route.points.points[0][1]));
+            }
+        });
+        builderSingle.show();
+    }
+
+    static void showRemoveRouteList(final Context context){
+        AlertDialog.Builder builderSingle = new AlertDialog.Builder(context);
+        builderSingle.setIcon(R.mipmap.ic_launcher);
+        builderSingle.setTitle("Select Route To Remove");
+
+        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(context, android.R.layout.select_dialog_item);
+        for (Route item : getRouteList()) {
+            arrayAdapter.add(item.name);
+        }
+
+        builderSingle.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        builderSingle.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Map.setMode(Map.Mode.FREE);
+                final Route route = getInstance().routeList.get(which);
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Alert");
+                builder.setMessage("Are you sure you want to delete " + route.name + "?" + " You cannot recover the data after you delete it.");
+                builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        final ProgressDialog progressDialog = new ProgressDialog(context);
+                        progressDialog.setMessage("Deleting route.");
+                        progressDialog.show();
+                        FirebaseDatabase database = FirebaseDatabase.getInstance();
+                        DatabaseReference dbRef = database.getReference("route");
+                        final Activity activity = (Activity) context;
+                        for (Route item : getInstance().routeList) {
+                            if (item.id.equals(route.id)) {
+                                dbRef.child(item.name).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        Snackbar.make(activity.getWindow().getDecorView().findViewById(android.R.id.content),
+                                                "Route updated.", Snackbar.LENGTH_SHORT).show();
+                                        progressDialog.dismiss();
+                                        downloadFromServer();
+                                    }
+                                });
+                                break;
+                            }
+                        }
+                    }
+                });
+                builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                    }
+                });
+                builder.show();
             }
         });
         builderSingle.show();
