@@ -1,13 +1,19 @@
 package college.paul.john.puvroute;
 
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -21,6 +27,11 @@ import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
@@ -28,6 +39,8 @@ import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.SecondaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
+
+import java.util.ArrayList;
 
 import college.paul.john.puvroute.model.Mode;
 import college.paul.john.puvroute.model.Route;
@@ -39,7 +52,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Drawer mDrawer;
     private View mMapView;
     private TextView destination;
-    ProgressDialog mProgressDialog;
+    private ProgressDialog mProgressDialog;
+    private FirebaseAuth mAuth;
+    private FirebaseUser mCurrentUser;
 
 
     @Override
@@ -47,6 +62,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         Icon.init(this);
+        mAuth = FirebaseAuth.getInstance();
         mProgressDialog = new ProgressDialog(this);
         mMapMakerParent = findViewById(R.id.llMapMakerParent);
         destination = findViewById(R.id.tvDestination);
@@ -55,7 +71,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         mMapView = mapFragment.getView();
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // Initialize local storage.
+        SharedPrefs.init(this);
+
+        mCurrentUser = mAuth.getCurrentUser();
+        createDrawer();
+    }
+
+    private void createDrawer() {
         // Create the drawer object.
         mDrawer = new DrawerBuilder()
                 .withTranslucentStatusBar(true)
@@ -77,14 +106,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     }
                 })
-                .addDrawerItems(
-                        new PrimaryDrawerItem().withIdentifier(0).withName("PUV Router").withIcon(R.mipmap.ic_launcher),
-                        new DividerDrawerItem(),
-                        new SecondaryDrawerItem().withIdentifier(1).withIcon(GoogleMaterial.Icon.gmd_add).withName("Add Route"),
-                        new SecondaryDrawerItem().withIdentifier(2).withIcon(GoogleMaterial.Icon.gmd_remove).withName("Remove Route"),
-                        new SecondaryDrawerItem().withIdentifier(3).withIcon(GoogleMaterial.Icon.gmd_view_carousel).withName("View All Routes"),
-                        new SecondaryDrawerItem().withIdentifier(4).withIcon(GoogleMaterial.Icon.gmd_update).withName("Download latest route")
-                ).withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
+                .withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
 
                     @Override
                     public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
@@ -104,20 +126,82 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             case 4:
                                 MapRoutes.downloadFromServer();
                                 break;
+                            case 5:
+                                AlertDialog.Builder signInBuilder = new AlertDialog.Builder(MapsActivity.this);
+                                signInBuilder.setTitle("Admin Sign-in");
+
+                                LayoutInflater inflater = MapsActivity.this.getLayoutInflater();
+                                @SuppressLint("InflateParams") View sigInView = inflater.inflate(R.layout.layout_sign_in, null);
+                                final EditText email = sigInView.findViewById(R.id.etEmail), password = sigInView.findViewById(R.id.etPassword);
+
+                                signInBuilder.setView(sigInView);
+                                signInBuilder.setPositiveButton("Sign-In", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        mProgressDialog.setMessage("Signing in...");
+                                        mProgressDialog.show();
+                                        mAuth.signInWithEmailAndPassword(email.getText().toString(), password.getText().toString())
+                                                .addOnCompleteListener(MapsActivity.this, new OnCompleteListener<AuthResult>() {
+                                                    @Override
+                                                    public void onComplete(@NonNull Task<AuthResult> task) {
+                                                        mProgressDialog.dismiss();
+                                                        if (task.isSuccessful()) {
+                                                            // Sign in success, update UI with the signed-in user's information
+                                                            mCurrentUser = mAuth.getCurrentUser();
+                                                            updateDrawer();
+                                                        } else {
+                                                            // If sign in fails, display a message to the user.
+                                                            Snackbar.make(getWindow().getDecorView().findViewById(android.R.id.content),
+                                                                    "Authentication failed.", Snackbar.LENGTH_SHORT).show();
+                                                        }
+                                                    }
+                                                });
+                                    }
+                                });
+                                signInBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                                    }
+                                });
+                                signInBuilder.show();
+                                break;
+                            case 6:
+                                mAuth.signOut();
+                                mCurrentUser = null;
+                                Map.setMode(Mode.FREE);
+                                Map.clearMap();
+                                updateDrawer();
+                                break;
                             default:
                                 break;
                         }
                         return false;
                     }
                 }).build();
+        updateDrawer();
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
+    private void updateDrawer() {
+        if (mDrawer != null) {
+            mDrawer.removeAllItems();
+            IDrawerItem[] drawerItems = {new PrimaryDrawerItem().withIdentifier(0).withName("PUV Router").withIcon(R.mipmap.ic_launcher),
+                    new DividerDrawerItem(),
+                    new SecondaryDrawerItem().withIdentifier(3).withIcon(GoogleMaterial.Icon.gmd_view_carousel).withName("View All Routes"),
+                    new SecondaryDrawerItem().withIdentifier(4).withIcon(GoogleMaterial.Icon.gmd_update).withName("Download latest route"),
+                    new SecondaryDrawerItem().withIdentifier(5).withIcon(GoogleMaterial.Icon.gmd_mail).withName("Admin Sign-In")};
 
-        // Initialize local storage.
-        SharedPrefs.init(this);
+            if (mCurrentUser != null) {
+                drawerItems = new IDrawerItem[]{new PrimaryDrawerItem().withIdentifier(0).withName("PUV Router").withIcon(R.mipmap.ic_launcher),
+                        new DividerDrawerItem(),
+                        new SecondaryDrawerItem().withIdentifier(1).withIcon(GoogleMaterial.Icon.gmd_add).withName("Add Route"),
+                        new SecondaryDrawerItem().withIdentifier(2).withIcon(GoogleMaterial.Icon.gmd_remove).withName("Remove Route"),
+                        new SecondaryDrawerItem().withIdentifier(3).withIcon(GoogleMaterial.Icon.gmd_view_carousel).withName("View All Routes"),
+                        new SecondaryDrawerItem().withIdentifier(4).withIcon(GoogleMaterial.Icon.gmd_update).withName("Download latest route"),
+                        new SecondaryDrawerItem().withIdentifier(6).withIcon(GoogleMaterial.Icon.gmd_mail).withName("Sign Out")};
+            }
+            mDrawer.addItems(drawerItems);
+        }
     }
 
     /**
@@ -180,7 +264,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             @Override
             public void loadComplete() {
-                if (mProgressDialog.isShowing()){
+                if (mProgressDialog.isShowing()) {
                     mProgressDialog.dismiss();
                 }
                 Snackbar.make(getWindow().getDecorView().findViewById(android.R.id.content),
@@ -203,13 +287,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     // Button event for cancel
     public void cancelMapMaker(View view) {
-        if (Map.getMode() == Mode.MAP_MAKER) {
-            if (Map.getMarkerPoints().size() > 0) {
-                Map.clearMap();
-            } else {
-                Map.setMode(Mode.FREE);
-            }
-        }
+        Map.clearMap();
+        Map.setMode(Mode.FREE);
     }
 
     // Button event for save
