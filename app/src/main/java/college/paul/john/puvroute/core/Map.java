@@ -1,4 +1,4 @@
-package college.paul.john.puvroute;
+package college.paul.john.puvroute.core;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -30,6 +30,7 @@ import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 
+import college.paul.john.puvroute.Icon;
 import college.paul.john.puvroute.model.Mode;
 import college.paul.john.puvroute.model.Route;
 
@@ -37,7 +38,7 @@ import college.paul.john.puvroute.model.Route;
     This class handles all Google map view activities
     Code for manipulating google maps should be done here.
  */
-class Map {
+public class Map {
     private static final String TAG = "Map";
     private static volatile Map instance;
     private GoogleMap mMap;
@@ -47,12 +48,12 @@ class Map {
     private OnMapListener mMapListener;
     private Location currentLocation;
 
-    interface OnMapListener{
+    public interface OnMapListener{
         void onChangeMode(int mode);
     }
 
     // Always call this method before calling other methods to make sure that map is working properly.
-    static void init(Context context, GoogleMap map) {
+    public static void init(Context context, GoogleMap map) {
         getInstance().mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
         getInstance().markerPoints = new ArrayList<>();
         getInstance().mMap = map;
@@ -88,7 +89,7 @@ class Map {
         });
     }
 
-    static Map getInstance() {
+    public static Map getInstance() {
         synchronized (Map.class) {
             if (instance == null) {
                 instance = new Map();
@@ -99,7 +100,7 @@ class Map {
 
     // This doesn't do anything much but this is useful when you have UI that
     // changes behavior when the map changes mode.
-    static void setMode(int mode) {
+    public static void setMode(int mode) {
         getInstance().currentMode = mode;
         if (getInstance().mMapListener != null){
             getInstance().mMapListener.onChangeMode(mode);
@@ -107,7 +108,7 @@ class Map {
     }
 
     // Get current map mode.
-    static int getMode(){
+    public static int getMode(){
         return getInstance().currentMode;
     }
 
@@ -149,7 +150,7 @@ class Map {
         }
     }
 
-    static void moveCamera(LatLng latLng) {
+    public static void moveCamera(LatLng latLng) {
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)   // Sets the center of the map to location user
                 .zoom(17)   // Sets the zoom
@@ -186,12 +187,12 @@ class Map {
     }
 
     // Get the instance of the map
-    static GoogleMap getMap(){
+    public static GoogleMap getMap(){
         return getInstance().mMap;
     }
 
     // Remove all markers poly line and other object inside the map.
-    static void clearMap(){
+    public static void clearMap(){
         if (getInstance().mMap != null) {
             getInstance().mMap.clear();
         }
@@ -201,7 +202,7 @@ class Map {
     }
 
     // Get marker points stored.
-    static ArrayList<LatLng> getMarkerPoints(){
+    public static ArrayList<LatLng> getMarkerPoints(){
         return getInstance().markerPoints;
     }
 
@@ -254,17 +255,17 @@ class Map {
     }
 
     // Must be call in order for Activity to listen to any events involving the Map class.
-    static void setMapListener(OnMapListener mapListener){
+    public static void setMapListener(OnMapListener mapListener){
         getInstance().mMapListener = mapListener;
     }
 
     // Get your current location and return as Location class.
-    static Location getCurrentLocation(){
+    public static Location getCurrentLocation(){
         return getInstance().currentLocation;
     }
 
     // Set marker on the map.
-    static void setMarker(LatLng latLng, String title, BitmapDescriptor icon){
+    public static void setMarker(LatLng latLng, String title, BitmapDescriptor icon){
         if (icon == null){
             icon = BitmapDescriptorFactory.defaultMarker();
         }
@@ -278,7 +279,7 @@ class Map {
     /*
      Update google maps direction based on Route points.
      */
-    static void redrawMap(Route route) {
+    public static void redrawMap(Route route) {
         clearMap();
         LatLng[] latLng = new LatLng[route.points.points.length];
         for (int i = 0; i < route.points.points.length; i++) {
@@ -295,7 +296,7 @@ class Map {
     }
 
     // Move screen to you current location.
-    static void focusSelf(){
+    public static void focusSelf(){
         LatLng latLng = new LatLng(getCurrentLocation().getLatitude(), getCurrentLocation().getLongitude());
         moveCamera(latLng);
     }

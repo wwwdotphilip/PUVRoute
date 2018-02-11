@@ -4,7 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 
-class Icon {
+public class Icon {
     private static Bitmap finish;
     private static Bitmap start;
 
@@ -27,14 +27,14 @@ class Icon {
     /*
         Get the finish icon.
      */
-    static Bitmap getFinish() {
+    public static Bitmap getFinish() {
         return finish;
     }
 
     /*
         Get the start icon.
      */
-    static Bitmap getStart() {
+    public static Bitmap getStart() {
         return start;
     }
 

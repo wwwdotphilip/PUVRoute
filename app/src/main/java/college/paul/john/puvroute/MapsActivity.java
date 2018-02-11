@@ -40,8 +40,8 @@ import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.SecondaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
-import java.util.ArrayList;
-
+import college.paul.john.puvroute.core.Map;
+import college.paul.john.puvroute.core.MapRoutes;
 import college.paul.john.puvroute.model.Mode;
 import college.paul.john.puvroute.model.Route;
 

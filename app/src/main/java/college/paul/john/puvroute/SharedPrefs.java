@@ -14,7 +14,7 @@ import college.paul.john.puvroute.model.Route;
     This class is responsible for storing and acquiring route data locally.
     All local storage should be done here.
  */
-class SharedPrefs {
+public class SharedPrefs {
     private static volatile SharedPrefs instance;
     private SharedPreferences mSharedPreferences;
 
@@ -38,7 +38,7 @@ class SharedPrefs {
     }
 
     // Store routes locally.
-    static boolean storeRoutes(ArrayList<Route> routes) {
+    public static boolean storeRoutes(ArrayList<Route> routes) {
         try {
             String result = new Gson().toJson(routes);
             getInstance().mSharedPreferences.edit().putString("routes", result).apply();
@@ -50,7 +50,7 @@ class SharedPrefs {
     }
 
     // Get routes from local storage.
-    static ArrayList<Route> getRoute() {
+    public static ArrayList<Route> getRoute() {
         ArrayList<Route> routeList = new ArrayList<>();
         String result = getInstance().mSharedPreferences.getString("routes", null);
         if (result != null) {

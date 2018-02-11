@@ -12,10 +12,12 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-class Parser {
+import college.paul.john.puvroute.core.Map;
+
+public class Parser {
 
     // Fetches data from url passed
-    static class FetchUrl extends AsyncTask<String, Void, String> {
+    public static class FetchUrl extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... url) {
@@ -86,7 +88,7 @@ class Parser {
         return data;
     }
 
-    static String getUrl(LatLng origin, LatLng dest) {
+    public static String getUrl(LatLng origin, LatLng dest) {
 
         // Origin of route
         String str_origin = "origin=" + origin.latitude + "," + origin.longitude;

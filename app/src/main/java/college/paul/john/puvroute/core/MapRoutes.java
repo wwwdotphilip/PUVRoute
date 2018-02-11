@@ -1,4 +1,4 @@
-package college.paul.john.puvroute;
+package college.paul.john.puvroute.core;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -28,6 +28,10 @@ import com.google.gson.Gson;
 
 import java.util.ArrayList;
 
+import college.paul.john.puvroute.Parser;
+import college.paul.john.puvroute.R;
+import college.paul.john.puvroute.SharedPrefs;
+import college.paul.john.puvroute.Utilities;
 import college.paul.john.puvroute.model.Mode;
 import college.paul.john.puvroute.model.Points;
 import college.paul.john.puvroute.model.Route;
@@ -36,7 +40,7 @@ import college.paul.john.puvroute.model.Route;
     This class is the bridge between the ui and backend of the app
     All data handling should be call here.
  */
-class MapRoutes {
+public class MapRoutes {
     private static final String TAG = "MapRoutes";
     private static volatile MapRoutes instance;
     private ArrayList<Route> routeList;
@@ -67,14 +71,14 @@ class MapRoutes {
     }
 
     // Listen to any changes happening to MapRoutes
-    static void setRouteListener(RouteListener listener) {
+    public static void setRouteListener(RouteListener listener) {
         getInstance().mListener = listener;
     }
 
     /*
         Load route data from firebase or local storage.
      */
-    static void loadRoutes() {
+    public static void loadRoutes() {
         getInstance().routeList = SharedPrefs.getRoute();
         if (getInstance().routeList.size() < 1) {
             downloadFromServer();
@@ -88,7 +92,7 @@ class MapRoutes {
     }
 
     // Download routes from firebase server.
-    static void downloadFromServer() {
+    public static void downloadFromServer() {
         // Download and use firebase database.
         if (getInstance().mListener != null){
             getInstance().mListener.onStart();
@@ -136,7 +140,7 @@ class MapRoutes {
     /*
         Add route to to server
      */
-    static void addRoute(final Context context, final ArrayList<LatLng> markerPoints, final boolean confirmation, final String routeName) {
+    public static void addRoute(final Context context, final ArrayList<LatLng> markerPoints, final boolean confirmation, final String routeName) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(context);
         String positive = "Done";
         final String[] tempRouteName = new String[1];
@@ -225,7 +229,7 @@ class MapRoutes {
     }
 
     // Get list of routes.
-    static ArrayList<Route> getRouteList() {
+    public static ArrayList<Route> getRouteList() {
         return getInstance().routeList;
     }
 
@@ -247,7 +251,7 @@ class MapRoutes {
     }
 
     //Set your destination based on Place class
-    static void setDestination(Place destination){
+    public static void setDestination(Place destination){
         Double[] shortestPath = new Double[2];
         Double lowestDistance = null;
         Double lowestOrigin = null;
@@ -301,7 +305,7 @@ class MapRoutes {
     }
 
     // Show a list of all routes available.
-    static void showRouteList(final Context context){
+    public static void showRouteList(final Context context){
         AlertDialog.Builder builderSingle = new AlertDialog.Builder(context);
         builderSingle.setIcon(R.mipmap.ic_launcher);
         builderSingle.setTitle("Route List");
@@ -333,7 +337,7 @@ class MapRoutes {
     }
 
     // Displays list of routes that can be remove.
-    static void showRemoveRouteList(final Context context){
+    public static void showRemoveRouteList(final Context context){
         AlertDialog.Builder builderSingle = new AlertDialog.Builder(context);
         builderSingle.setIcon(R.mipmap.ic_launcher);
         builderSingle.setTitle("Select Route To Remove");
