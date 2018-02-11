@@ -5,7 +5,7 @@
 2. 3 GB RAM minimum, 8 GB RAM recommended; plus 1 GB for the Android Emulator
 3. 2 GB of available disk space minimum, 4 GB Recommended (500 MB for IDE + 1.5 GB for Android SDK and emulator system image)
 4. 1280 x 800 minimum screen resolution
-
+5. At least Java 7 SDK or JDK.
 
 Firebase URL https://console.firebase.google.com/u/0/project/puvrouter/database/puvrouter/data <br>
 Google API URl https://console.developers.google.com/apis/dashboard?project=puvrouter&duration=PT1H
