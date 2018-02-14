@@ -89,7 +89,7 @@ public class Map {
         });
     }
 
-    public static Map getInstance() {
+    static Map getInstance() {
         synchronized (Map.class) {
             if (instance == null) {
                 instance = new Map();
@@ -150,7 +150,7 @@ public class Map {
         }
     }
 
-    public static void moveCamera(LatLng latLng) {
+    static void moveCamera(LatLng latLng) {
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)   // Sets the center of the map to location user
                 .zoom(17)   // Sets the zoom
@@ -260,12 +260,12 @@ public class Map {
     }
 
     // Get your current location and return as Location class.
-    public static Location getCurrentLocation(){
+    static Location getCurrentLocation(){
         return getInstance().currentLocation;
     }
 
     // Set marker on the map.
-    public static void setMarker(LatLng latLng, String title, BitmapDescriptor icon){
+    static void setMarker(LatLng latLng, String title, BitmapDescriptor icon){
         if (icon == null){
             icon = BitmapDescriptorFactory.defaultMarker();
         }
@@ -279,7 +279,7 @@ public class Map {
     /*
      Update google maps direction based on Route points.
      */
-    public static void redrawMap(Route route) {
+    static void redrawMap(Route route) {
         clearMap();
         LatLng[] latLng = new LatLng[route.points.points.length];
         for (int i = 0; i < route.points.points.length; i++) {
@@ -296,7 +296,7 @@ public class Map {
     }
 
     // Move screen to you current location.
-    public static void focusSelf(){
+    static void focusSelf(){
         LatLng latLng = new LatLng(getCurrentLocation().getLatitude(), getCurrentLocation().getLongitude());
         moveCamera(latLng);
     }
