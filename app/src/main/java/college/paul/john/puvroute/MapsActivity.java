@@ -173,6 +173,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 Map.clearMap();
                                 updateDrawer();
                                 break;
+                            case 7:
+                                Utilities.showLegends(MapsActivity.this);
+                                break;
                             default:
                                 break;
                         }
@@ -189,7 +192,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     new DividerDrawerItem(),
                     new SecondaryDrawerItem().withIdentifier(3).withIcon(GoogleMaterial.Icon.gmd_view_carousel).withName("View All Routes"),
                     new SecondaryDrawerItem().withIdentifier(4).withIcon(GoogleMaterial.Icon.gmd_update).withName("Download latest route"),
-                    new SecondaryDrawerItem().withIdentifier(5).withIcon(GoogleMaterial.Icon.gmd_mail).withName("Admin Sign-In")};
+                    new SecondaryDrawerItem().withIdentifier(7).withIcon(GoogleMaterial.Icon.gmd_update).withName("Legends"),
+                    new SecondaryDrawerItem().withIdentifier(5).withIcon(GoogleMaterial.Icon.gmd_label).withName("Admin Sign-In")};
 
             if (mCurrentUser != null) {
                 drawerItems = new IDrawerItem[]{new PrimaryDrawerItem().withIdentifier(0).withName("PUV Router").withIcon(R.mipmap.ic_launcher),
@@ -198,6 +202,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         new SecondaryDrawerItem().withIdentifier(2).withIcon(GoogleMaterial.Icon.gmd_remove).withName("Remove Route"),
                         new SecondaryDrawerItem().withIdentifier(3).withIcon(GoogleMaterial.Icon.gmd_view_carousel).withName("View All Routes"),
                         new SecondaryDrawerItem().withIdentifier(4).withIcon(GoogleMaterial.Icon.gmd_update).withName("Download latest route"),
+                        new SecondaryDrawerItem().withIdentifier(7).withIcon(GoogleMaterial.Icon.gmd_label).withName("Legends"),
                         new SecondaryDrawerItem().withIdentifier(6).withIcon(GoogleMaterial.Icon.gmd_mail).withName("Sign Out")};
             }
             mDrawer.addItems(drawerItems);

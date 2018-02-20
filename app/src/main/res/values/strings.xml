@@ -22,4 +22,10 @@
     </string>
     <string name="email">Email</string>
     <string name="password">Password</string>
+    <string name="start_of_route">Start of Route</string>
+    <string name="end_of_route">End of Route</string>
+    <string name="route_path">Route Path</string>
+    <string name="walk_path">Walk Path</string>
+    <string name="map_maker_point">Map Maker Point</string>
+    <string name="destination_marker">Destination Marker</string>
 </resources>
