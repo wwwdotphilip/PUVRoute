@@ -22,10 +22,10 @@
     </string>
     <string name="email">Email</string>
     <string name="password">Password</string>
-    <string name="start_of_route">Start of Route</string>
-    <string name="end_of_route">End of Route</string>
-    <string name="route_path">Route Path</string>
-    <string name="walk_path">Walk Path</string>
-    <string name="map_maker_point">Map Maker Point</string>
-    <string name="destination_marker">Destination Marker</string>
+    <string name="start_of_route">Start of Route - this is showed in every route as an indicator where the route starts.</string>
+    <string name="end_of_route">End of Route - this is showed in every route that means it is the end ouf route.</string>
+    <string name="route_path">Route Path - the whole route of every PUV is presented with color red line.</string>
+    <string name="walk_path">Walk Path - this means user needs to walk to get into the route where PUV will pass.</string>
+    <string name="map_maker_point">Map Maker Point - this can only be used by admin in adding routes; this marker is used in pointing a route.</string>
+    <string name="destination_marker">Destination Marker - this marker will be seen by users after they specified their destination.</string>
 </resources>

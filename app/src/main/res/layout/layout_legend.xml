@@ -7,9 +7,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <TableRow
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="wrap_content"
             android:layout_margin="15dp"
             android:gravity="center">
 
@@ -24,9 +24,9 @@
                 android:layout_marginLeft="@dimen/legend_label_distance"
                 android:layout_marginStart="@dimen/legend_label_distance"
                 android:text="@string/start_of_route" />
-        </TableRow>
+        </LinearLayout>
 
-        <TableRow
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_margin="15dp"
@@ -43,9 +43,9 @@
                 android:layout_marginLeft="@dimen/legend_label_distance"
                 android:layout_marginStart="@dimen/legend_label_distance"
                 android:text="@string/end_of_route" />
-        </TableRow>
+        </LinearLayout>
 
-        <TableRow
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_margin="15dp"
@@ -62,9 +62,9 @@
                 android:layout_marginLeft="@dimen/legend_label_distance"
                 android:layout_marginStart="@dimen/legend_label_distance"
                 android:text="@string/route_path" />
-        </TableRow>
+        </LinearLayout>
 
-        <TableRow
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_margin="15dp"
@@ -81,9 +81,9 @@
                 android:layout_marginLeft="@dimen/legend_label_distance"
                 android:layout_marginStart="@dimen/legend_label_distance"
                 android:text="@string/walk_path" />
-        </TableRow>
+        </LinearLayout>
 
-        <TableRow
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_margin="15dp"
@@ -100,9 +100,9 @@
                 android:layout_marginLeft="@dimen/legend_label_distance"
                 android:layout_marginStart="@dimen/legend_label_distance"
                 android:text="@string/map_maker_point" />
-        </TableRow>
+        </LinearLayout>
 
-        <TableRow
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_margin="15dp"
@@ -119,6 +119,6 @@
                 android:layout_marginLeft="@dimen/legend_label_distance"
                 android:layout_marginStart="@dimen/legend_label_distance"
                 android:text="@string/destination_marker" />
-        </TableRow>
+        </LinearLayout>
     </TableLayout>
 </ScrollView>
