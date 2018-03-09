@@ -7,12 +7,16 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -31,6 +35,7 @@ import com.google.android.gms.tasks.Task;
 import java.util.ArrayList;
 
 import college.paul.john.puvroute.Icon;
+import college.paul.john.puvroute.Utilities;
 import college.paul.john.puvroute.model.Mode;
 import college.paul.john.puvroute.model.Route;
 
@@ -47,6 +52,8 @@ public class Map {
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private OnMapListener mMapListener;
     private Location currentLocation;
+    private LocationCallback mLocationCallback;
+    private LocationRequest mLocationRequest;
 
     public interface OnMapListener{
         void onChangeMode(int mode);
@@ -144,6 +151,34 @@ public class Map {
                                 }
                             }
                         });
+
+                getInstance().mLocationCallback = new LocationCallback(){
+                    @Override
+                    public void onLocationResult(LocationResult locationResult) {
+                        Log.v(TAG, "Location request.");
+                        if (locationResult == null){
+                            return;
+                        }
+                        for (Location location : locationResult.getLocations()){
+                            try {
+                                LatLng destination = MapRoutes.getDestination();
+                                LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                                double distance = Utilities.distance(destination.latitude, destination.longitude,
+                                        currentLocation.latitude, currentLocation.longitude);
+                                if (distance < 0.10){
+                                    Log.v(TAG, Math.round(distance * 1000) + " meter(s) left to destination.");
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                };
+
+                getInstance().mLocationRequest = new LocationRequest();
+                getInstance().mLocationRequest.setInterval(10000); // two minute interval
+                getInstance().mLocationRequest.setFastestInterval(10000);
+                getInstance().mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
             } else {
                 Log.e(TAG, "Map has not been initialize. Call Map.setMap(GoogleMap)");
             }
@@ -299,5 +334,24 @@ public class Map {
     static void focusSelf(){
         LatLng latLng = new LatLng(getCurrentLocation().getLatitude(), getCurrentLocation().getLongitude());
         moveCamera(latLng);
+    }
+
+    public static void requestLocation(Context context){
+         /*
+          Call permission dialog for user to allow or dennie.
+          Note that you will not be able to identify your current location if you dennie
+          this permission.
+         */
+        ActivityCompat.requestPermissions((Activity) context, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                1);
+        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        getInstance().mFusedLocationProviderClient.requestLocationUpdates(getInstance().mLocationRequest,
+                getInstance().mLocationCallback, Looper.myLooper());
+    }
+
+    public static void removeLocationRequest(){
+        getInstance().mFusedLocationProviderClient.removeLocationUpdates(getInstance().mLocationCallback);
     }
 }

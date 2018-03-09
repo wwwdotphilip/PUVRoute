@@ -6,6 +6,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.location.Location;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
@@ -45,6 +46,7 @@ public class MapRoutes {
     private static volatile MapRoutes instance;
     private ArrayList<Route> routeList;
     private RouteListener mListener;
+    private LatLng mDestination;
 
     public interface RouteListener {
         void onStart();
@@ -251,7 +253,7 @@ public class MapRoutes {
     }
 
     //Set your destination based on Place class
-    public static void setDestination(Place destination){
+    public static void setDestination(Place destination, Context context){
         Double[] shortestPath = new Double[2];
         Double lowestDistance = null;
         Double lowestOrigin = null;
@@ -299,6 +301,7 @@ public class MapRoutes {
             LatLng dest = new LatLng(shortestPath[0], shortestPath[1]);
             new Parser.FetchUrl().execute(Parser.getUrl(origin, dest));
         }
+        getInstance().mDestination = destination.getLatLng();
         Map.setMarker(destination.getLatLng(), "Destination: " + destination.getName(),
                 BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         Map.focusSelf();
@@ -405,5 +408,9 @@ public class MapRoutes {
             }
         });
         builderSingle.show();
+    }
+
+    public static LatLng getDestination() {
+        return getInstance().mDestination;
     }
 }

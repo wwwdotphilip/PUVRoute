@@ -176,6 +176,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             case 7:
                                 Utilities.showLegends(MapsActivity.this);
                                 break;
+                            case 8:
+                                Map.setMode(Mode.FREE);
+                                Map.clearMap();
+                                break;
                             default:
                                 break;
                         }
@@ -193,6 +197,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     new SecondaryDrawerItem().withIdentifier(3).withIcon(GoogleMaterial.Icon.gmd_view_carousel).withName("View All Routes"),
                     new SecondaryDrawerItem().withIdentifier(4).withIcon(GoogleMaterial.Icon.gmd_update).withName("Download latest route"),
                     new SecondaryDrawerItem().withIdentifier(7).withIcon(GoogleMaterial.Icon.gmd_update).withName("Legends"),
+                    new SecondaryDrawerItem().withIdentifier(8).withIcon(GoogleMaterial.Icon.gmd_clear_all).withName("Clear Map"),
                     new SecondaryDrawerItem().withIdentifier(5).withIcon(GoogleMaterial.Icon.gmd_label).withName("Admin Sign-In")};
 
             if (mCurrentUser != null) {
@@ -203,6 +208,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         new SecondaryDrawerItem().withIdentifier(3).withIcon(GoogleMaterial.Icon.gmd_view_carousel).withName("View All Routes"),
                         new SecondaryDrawerItem().withIdentifier(4).withIcon(GoogleMaterial.Icon.gmd_update).withName("Download latest route"),
                         new SecondaryDrawerItem().withIdentifier(7).withIcon(GoogleMaterial.Icon.gmd_label).withName("Legends"),
+                        new SecondaryDrawerItem().withIdentifier(8).withIcon(GoogleMaterial.Icon.gmd_clear_all).withName("Clear Map"),
                         new SecondaryDrawerItem().withIdentifier(6).withIcon(GoogleMaterial.Icon.gmd_mail).withName("Sign Out")};
             }
             mDrawer.addItems(drawerItems);
@@ -230,15 +236,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         destination.setText(R.string.set_destination);
                         mMapMakerParent.setVisibility(View.GONE);
                         destination.setBackgroundColor(Color.WHITE);
+                        Map.removeLocationRequest();
                         break;
                     case Mode.MAP_MAKER:
                         destination.setText(R.string.map_maker_mode);
                         mMapMakerParent.setVisibility(View.VISIBLE);
                         destination.setBackgroundColor(getResources().getColor(R.color.green));
+                        Map.removeLocationRequest();
                         break;
                     case Mode.ROUTE:
                         mMapMakerParent.setVisibility(View.GONE);
                         destination.setBackgroundColor(Color.WHITE);
+                        Map.requestLocation(MapsActivity.this);
                         break;
                     default:
                         break;
@@ -338,7 +347,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Map.setMode(Mode.ROUTE);
                 if (MapRoutes.getRouteList().size() > 0) {
                     // If route is found we set the destination.
-                    MapRoutes.setDestination(place);
+                    MapRoutes.setDestination(place, MapsActivity.this);
                 } else {
                     Toast.makeText(getApplicationContext(), "No routes found", Toast.LENGTH_SHORT).show();
                 }
