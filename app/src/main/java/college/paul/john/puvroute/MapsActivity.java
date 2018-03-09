@@ -254,6 +254,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 }
             }
+
+            @Override
+            public void onNearDestination(double distance) {
+                Snackbar.make(getWindow().getDecorView().findViewById(android.R.id.content),
+                        Math.round(distance * 1000) + " meter(s) left to destination.", 9000).show();
+            }
         });
         if (mMapView != null &&
                 mMapView.findViewById(Integer.parseInt("1")) != null) {

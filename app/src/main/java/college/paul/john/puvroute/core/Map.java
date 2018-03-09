@@ -57,6 +57,7 @@ public class Map {
 
     public interface OnMapListener{
         void onChangeMode(int mode);
+        void onNearDestination(double distance);
     }
 
     // Always call this method before calling other methods to make sure that map is working properly.
@@ -167,6 +168,9 @@ public class Map {
                                         currentLocation.latitude, currentLocation.longitude);
                                 if (distance < 0.10){
                                     Log.v(TAG, Math.round(distance * 1000) + " meter(s) left to destination.");
+                                    if (getInstance().mMapListener != null){
+                                        getInstance().mMapListener.onNearDestination(distance);
+                                    }
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
