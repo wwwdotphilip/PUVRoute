@@ -353,7 +353,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Map.setMode(Mode.ROUTE);
                 if (MapRoutes.getRouteList().size() > 0) {
                     // If route is found we set the destination.
-                    MapRoutes.setDestination(place, MapsActivity.this);
+                    MapRoutes.setDestination(place);
                 } else {
                     Toast.makeText(getApplicationContext(), "No routes found", Toast.LENGTH_SHORT).show();
                 }

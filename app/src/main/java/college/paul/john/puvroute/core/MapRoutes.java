@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.location.Location;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
@@ -48,16 +47,6 @@ public class MapRoutes {
     private RouteListener mListener;
     private LatLng mDestination;
 
-    public interface RouteListener {
-        void onStart();
-
-        void loadComplete();
-
-        void onError(String error);
-
-        void onChange(Route route);
-    }
-
     private MapRoutes() {
         routeList = new ArrayList<>();
     }
@@ -96,7 +85,7 @@ public class MapRoutes {
     // Download routes from firebase server.
     public static void downloadFromServer() {
         // Download and use firebase database.
-        if (getInstance().mListener != null){
+        if (getInstance().mListener != null) {
             getInstance().mListener.onStart();
         }
         getInstance().routeList.clear();
@@ -116,7 +105,7 @@ public class MapRoutes {
                             route.description = String.valueOf(data.getValue());
                         } else if (data.getKey().equals("points")) {
                             route.points = new Gson().fromJson(value, Points.class);
-                        } else if (data.getKey().equals("id")){
+                        } else if (data.getKey().equals("id")) {
                             route.id = String.valueOf(data.getValue());
                         }
                     }
@@ -253,7 +242,7 @@ public class MapRoutes {
     }
 
     //Set your destination based on Place class
-    public static void setDestination(Place destination, Context context){
+    public static void setDestination(Place destination) {
         Double[] shortestPath = new Double[2];
         Double lowestDistance = null;
         Double lowestOrigin = null;
@@ -264,9 +253,9 @@ public class MapRoutes {
 
         //Loop though the list and calculate the lowest distance from destination to the points of route list
         for (Route item : routeList) {
-            for (double[] points :item.points.points) {
+            for (double[] points : item.points.points) {
                 double destinationDistance = Utilities.distance(destination.getLatLng().latitude, destination.getLatLng().longitude, points[0], points[1]);
-                if (lowestDistance == null || lowestDistance > destinationDistance){
+                if (lowestDistance == null || lowestDistance > destinationDistance) {
                     lowestDistance = destinationDistance;
                     selected = new LatLng(points[0], points[1]);
                     selectedRoute = item;
@@ -275,7 +264,7 @@ public class MapRoutes {
         }
 
         // If a coorditane is determine we will request Google api to create a direction.
-        if (selected != null){
+        if (selected != null) {
             changeRoute(selectedRoute.id);
             LatLng origin = new LatLng(selected.latitude, selected.longitude);
             LatLng dest = new LatLng(destination.getLatLng().latitude, destination.getLatLng().longitude);
@@ -283,11 +272,11 @@ public class MapRoutes {
         }
 
         // Get the shortest path from our current location to the nearest point of the selected route.
-        if (selectedRoute != null){
+        if (selectedRoute != null) {
             for (double[] points : selectedRoute.points.points) {
                 double originDistance = Utilities.distance(currentLocation.getLatitude(), currentLocation.getLongitude(),
                         points[0], points[1]);
-                if (lowestOrigin == null || lowestOrigin > originDistance){
+                if (lowestOrigin == null || lowestOrigin > originDistance) {
                     lowestOrigin = originDistance;
                     shortestPath[0] = points[0];
                     shortestPath[1] = points[1];
@@ -308,7 +297,7 @@ public class MapRoutes {
     }
 
     // Show a list of all routes available.
-    public static void showRouteList(final Context context){
+    public static void showRouteList(final Context context) {
         AlertDialog.Builder builderSingle = new AlertDialog.Builder(context);
         builderSingle.setIcon(R.mipmap.ic_launcher);
         builderSingle.setTitle("Route List");
@@ -340,7 +329,7 @@ public class MapRoutes {
     }
 
     // Displays list of routes that can be remove.
-    public static void showRemoveRouteList(final Context context){
+    public static void showRemoveRouteList(final Context context) {
         AlertDialog.Builder builderSingle = new AlertDialog.Builder(context);
         builderSingle.setIcon(R.mipmap.ic_launcher);
         builderSingle.setTitle("Select Route To Remove");
@@ -412,5 +401,15 @@ public class MapRoutes {
 
     public static LatLng getDestination() {
         return getInstance().mDestination;
+    }
+
+    public interface RouteListener {
+        void onStart();
+
+        void loadComplete();
+
+        void onError(String error);
+
+        void onChange(Route route);
     }
 }

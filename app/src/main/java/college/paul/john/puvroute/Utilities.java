@@ -38,7 +38,7 @@ public class Utilities {
         return (rad * 180.0 / Math.PI);
     }
 
-    public static void showLegends(Context context){
+    static void showLegends(Context context){
         AlertDialog.Builder legendBuilder = new AlertDialog.Builder(context);
         legendBuilder.setTitle("Legends");
 
